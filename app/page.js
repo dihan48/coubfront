@@ -1,95 +1,39 @@
-import Image from 'next/image'
-import styles from './page.module.css'
+import { Suspense } from "react";
+import { VideoList } from "@/components/videoList/videoList";
 
-export default function Home() {
+import styles from "./page.module.css";
+
+export default async function Home() {
+  const dataPromise = fetch(
+    "https://coub.com/api/v2/timeline/subscriptions/daily?page=1"
+  )
+    .then((res) => res.json())
+    .then((data) =>
+      data.coubs.map((item) => {
+        const newItem = {};
+
+        newItem.permalink = item.permalink;
+        newItem.videoMed = item.file_versions.html5.video.med;
+        newItem.videoHigh = item.file_versions.html5.video.high;
+        newItem.videoHigher = item.file_versions.html5.video.higher;
+        newItem.audioMed = item.file_versions.html5.audio.med;
+        newItem.title = item.title;
+        newItem.picture = item.picture;
+
+        return newItem;
+      })
+    );
+
   return (
     <main className={styles.main}>
-      <div className={styles.description}>
-        <p>
-          Get started by editing&nbsp;
-          <code className={styles.code}>app/page.js</code>
-        </p>
-        <div>
-          <a
-            href="https://vercel.com?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            By{' '}
-            <Image
-              src="/vercel.svg"
-              alt="Vercel Logo"
-              className={styles.vercelLogo}
-              width={100}
-              height={24}
-              priority
-            />
-          </a>
-        </div>
-      </div>
-
-      <div className={styles.center}>
-        <Image
-          className={styles.logo}
-          src="/next.svg"
-          alt="Next.js Logo"
-          width={180}
-          height={37}
-          priority
-        />
-      </div>
-
-      <div className={styles.grid}>
-        <a
-          href="https://beta.nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className={styles.card}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2>
-            Docs <span>-&gt;</span>
-          </h2>
-          <p>Find in-depth information about Next.js features and API.</p>
-        </a>
-
-        <a
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className={styles.card}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2>
-            Learn <span>-&gt;</span>
-          </h2>
-          <p>Learn about Next.js in an interactive course with&nbsp;quizzes!</p>
-        </a>
-
-        <a
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className={styles.card}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2>
-            Templates <span>-&gt;</span>
-          </h2>
-          <p>Explore the Next.js 13 playground.</p>
-        </a>
-
-        <a
-          href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className={styles.card}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2>
-            Deploy <span>-&gt;</span>
-          </h2>
-          <p>
-            Instantly deploy your Next.js site to a shareable URL with Vercel.
-          </p>
-        </a>
-      </div>
+      <Suspense fallback={<div>Loading...</div>}>
+        <VideoListWrapper listPromise={dataPromise} />
+      </Suspense>
     </main>
-  )
+  );
+}
+
+async function VideoListWrapper({ listPromise }) {
+  const list = await listPromise;
+  return <VideoList list={list} />;
 }
