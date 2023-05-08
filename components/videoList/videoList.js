@@ -6,7 +6,7 @@ import { PlayerContainer } from "../player/player";
 export function VideoList(prop) {
   const [totalList, setTotalList] = useState([]);
   const audioRef = useRef();
-  const pageRef = useRef(36);
+  const pageRef = useRef(2);
 
   const list = prop?.list;
 
