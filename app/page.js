@@ -5,7 +5,8 @@ import styles from "./page.module.css";
 
 export default async function Home() {
   const dataPromise = fetch(
-    "https://coub.com/api/v2/timeline/subscriptions/daily?page=1"
+    "https://coub.com/api/v2/timeline/subscriptions/fresh?page=1",
+    { next: { revalidate: 10 } }
   )
     .then((res) => res.json())
     .then((data) =>
