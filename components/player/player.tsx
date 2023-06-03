@@ -214,6 +214,8 @@ export function Player({ data, audioRef, videoRef, isPlay, isInteracted, setIsIn
           className={styles.preview_image}
           width={960}
           height={960}
+          placeholder={data.blurDataURL ? "blur" : "empty"}
+          blurDataURL={data.blurDataURL || undefined}
         />
         <div ref={playerRef} className={styles.player} />
       </div>

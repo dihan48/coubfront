@@ -34,7 +34,12 @@ export const getStaticProps = async () => {
     .then(async (data) =>
       await Promise.all(data.coubs.map(async (item: any): Promise<Item> => {
 
-        const { base64 } = await getPlaiceholder(item.picture);
+        const buffer = await fetch(item.picture)
+          .then(res => res.arrayBuffer())
+          .then(arrayBuffer => Buffer.from(arrayBuffer))
+          .catch(() => null);
+
+        const { base64 } = buffer ? await getPlaiceholder(buffer) : { base64: null };
 
         return {
           permalink: item?.permalink || null,
