@@ -16,10 +16,12 @@ export default function Home({ coubs }: { coubs: Array<Item> }) {
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <link rel="icon" href="/favicon.ico" />
       </Head>
-      <main className={`${styles.main} ${inter.className}`}>
-        {/* <pre>{JSON.stringify(coubs, undefined, 2)}</pre> */}
-        <VideoList list={coubs} />
-      </main>
+      <div className={styles.container}>
+        <main className={`${styles.main} ${inter.className}`}>
+          {/* <pre>{JSON.stringify(coubs, undefined, 2)}</pre> */}
+          <VideoList list={coubs} />
+        </main>
+      </div>
     </>
   )
 }
