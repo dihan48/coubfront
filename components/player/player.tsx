@@ -217,6 +217,8 @@ export function Player({ data, audioRef, videoRef, isPlay, isInteracted, setIsIn
           placeholder={data.blurDataURL ? "blur" : "empty"}
           blurDataURL={data.blurDataURL || undefined}
         />
+        <video hidden src={getVideoSrc(data)} onCanPlay={() => { console.log("video hidden canplay") }} />
+        <audio hidden src={audioMed?.url || ""} onCanPlay={() => { console.log("audio hidden canplay") }} />
         <div ref={playerRef} className={styles.player} />
       </div>
     </>
@@ -239,4 +241,21 @@ function firstApplePlay(videoRef: RefObject<HTMLVideoElement>, audioRef: RefObje
     audio.pause();
     video.currentTime = 0;
   }
+}
+
+function getVideoSrc(data: Item) {
+  const { videoMed, videoHigh, videoHigher } = data;
+
+  const winWidth = typeof window === "object" ? window.innerWidth : 0;
+
+  let videoSrc = videoMed?.url || "";
+  if (winWidth >= 1200 && winWidth < 1560) {
+    videoSrc = videoHigh?.url || videoMed?.url || "";
+  }
+
+  if (winWidth >= 1560) {
+    videoSrc = videoHigher?.url || videoMed?.url || "";
+  }
+
+  return videoSrc;
 }
