@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { PlayerContainer } from "../playerContainer/playerContainer";
 import { Item } from "@/pages";
 
@@ -31,7 +31,7 @@ export function VideoList({ list }: { list: Item[] }) {
     }
   }, [page])
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (videoRef.current) return; // bypassing the strict mode double useEffect
     if (audioRef.current) return; // bypassing the strict mode double useEffect
 

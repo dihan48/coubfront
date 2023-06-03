@@ -132,21 +132,14 @@ export function Player({ data, audioRef, videoRef, isPlay, isInteracted, setIsIn
   }, [isPlay, isPlayed, play, stop])
 
   useEffect(() => {
-    const video = videoRef.current;
-    const player = playerRef.current;
-
-    if (player && video && isPlay) {
-      player.append(video);
-    }
-  }, [videoRef, isPlay]);
-
-  useEffect(() => {
     if (index === currentVideoIndex) {
       const audio = audioRef.current;
       const video = videoRef.current;
       const player = playerRef.current;
 
       if (audio && video && player) {
+        console.log("audio && video && player");
+
         player.append(video);
 
         audio.src = audioMed?.url || "";
@@ -164,6 +157,13 @@ export function Player({ data, audioRef, videoRef, isPlay, isInteracted, setIsIn
 
         video.load();
         audio.load();
+      } else {
+        console.log("!!! audio && video && player");
+        console.log({
+          audio,
+          video,
+          player,
+        })
       }
     }
   }, [index, currentVideoIndex, audioRef, videoRef, audioMed?.url, videoMed?.url, videoHigh?.url, videoHigher?.url])
@@ -226,6 +226,9 @@ function firstApplePlay(videoRef: RefObject<HTMLVideoElement>, audioRef: RefObje
   const audio = audioRef.current;
 
   if (video && audio) {
+    console.log(video, audio);
+    console.log(video.src, audio.src);
+
     video.play();
     video.pause();
     audio.currentTime = 0;
