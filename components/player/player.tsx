@@ -33,6 +33,8 @@ export function Player({ data, audioRef, videoRef, isPlay, isInteracted, setIsIn
   const [isPlayed, setIsPlayed] = useState(false);
 
   const playerRef = useRef<HTMLDivElement>(null);
+  const audioCanPlayRef = useRef(false);
+  const videoCanPlayRef = useRef(false);
 
   const play = useCallback(
     async function () {
@@ -55,57 +57,45 @@ export function Player({ data, audioRef, videoRef, isPlay, isInteracted, setIsIn
         }
 
         video.load();
+        audio.load();
 
-        if (audioMed?.url) {
-          audio.load();
+        const audioCanPlay = () => {
+          audio.removeEventListener("canplay", audioCanPlay);
+          console.log("audio canplay");
+          audioCanPlayRef.current = true;
+          play();
+        }
 
-          const canPlay = () => {
-            audio.removeEventListener("canplay", canPlay);
-            // console.log("canplay");
+        const videoCanPlay = () => {
+          video.removeEventListener("canplay", videoCanPlay);
+          console.log("video canplay");
+          videoCanPlayRef.current = true;
+          play();
+        }
 
-            if (video) {
-              video.play()
-                .then(() => {
+        const play = () => {
+          if (audioCanPlayRef.current && videoCanPlayRef.current) {
+            const audio = audioRef.current;
+            const video = videoRef.current;
 
-                })
-                .catch((error) => {
-                  console.log("video play error 1")
-                  console.log(error);
-                });
-              setIsPlayed(true);
-              console.timeEnd("playVideo");
+            if (video && audio) {
+              audio.play().then(() => {
+                console.log("audio.play")
+              }).catch((error) => {
+                console.log("audio.play error: ", error)
+              });
+
+              video.play().then(() => {
+                console.log("video.play")
+              }).catch((error) => {
+                console.log("video.play error: ", error)
+              });
             }
-
-            try {
-              audio
-                .play()
-                .then(() => {
-                  if (video) {
-                    audio.currentTime = video.currentTime;
-                  }
-                })
-                .catch((error) => {
-                  console.timeEnd("playAudio");
-                  console.log("audio play error 1")
-                  console.log(error);
-                  // console.log("setIsSoundOn(false)");
-                  setIsSoundOn(false);
-                });
-            } catch (error) {
-              console.log("audio play error 2")
-              console.log(error);
-            }
-          }
-
-          audio.addEventListener("canplay", canPlay);
-        } else {
-          console.log("audio empty")
-          if (video) {
-            video.play();
-            setIsPlayed(true);
-            console.timeEnd("playVideo");
           }
         }
+
+        audio.addEventListener("canplay", audioCanPlay);
+        video.addEventListener("canplay", videoCanPlay);
       }
     },
     [audioRef, audioMed?.url, videoMed?.url, videoHigh?.url, videoHigher?.url, videoRef]
@@ -157,14 +147,13 @@ export function Player({ data, audioRef, videoRef, isPlay, isInteracted, setIsIn
       const player = playerRef.current;
 
       if (audio && video && player) {
-
         player.append(video);
-        audio.src = audioMed?.url || "";
 
-        video.src = videoMed?.url || "";
+        audio.src = audioMed?.url || "";
 
         const winWidth = typeof window === "object" ? window.innerWidth : 0;
 
+        video.src = videoMed?.url || "";
         if (winWidth >= 1200 && winWidth < 1560) {
           video.src = videoHigh?.url || videoMed?.url || "";
         }
@@ -173,13 +162,8 @@ export function Player({ data, audioRef, videoRef, isPlay, isInteracted, setIsIn
           video.src = videoHigher?.url || videoMed?.url || "";
         }
 
-        console.log({ src: video.src })
-
         video.load();
-        if (audioMed?.url) {
-          audio.src = audioMed?.url;
-          audio.load();
-        }
+        audio.load();
       }
     }
   }, [index, currentVideoIndex, audioRef, videoRef, audioMed?.url, videoMed?.url, videoHigh?.url, videoHigher?.url])
@@ -223,7 +207,14 @@ export function Player({ data, audioRef, videoRef, isPlay, isInteracted, setIsIn
             </svg>
           </button>
         }
-        <Image src={data.picture || ""} alt="" style={currentVideoIndex === index ? {} : { opacity: 0.3 }} className={styles.preview_image} width={960} height={960} />
+        <Image
+          src={data.picture || ""}
+          alt=""
+          style={currentVideoIndex === index ? {} : { opacity: 0.3 }}
+          className={styles.preview_image}
+          width={960}
+          height={960}
+        />
         <div ref={playerRef} className={styles.player} />
       </div>
     </>
