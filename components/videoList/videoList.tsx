@@ -2,6 +2,7 @@ import {
   createContext,
   useContext,
   useEffect,
+  useLayoutEffect,
   useMemo,
   useRef,
   useState,
@@ -74,7 +75,7 @@ export function VideoList({ list }: { list: Item[] }) {
   const mapItemsRef = useRef<Map<Element, { index: number }>>(new Map());
   const observerRef = useRef<IntersectionObserver>();
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     const options = {
       threshold: 0.75,
     };
