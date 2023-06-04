@@ -72,8 +72,6 @@ type IProps = {
   audioRef: RefObject<HTMLAudioElement>;
   videoRef: RefObject<HTMLVideoElement>;
   index: number;
-  currentVideoIndex: number;
-  isCentered: boolean;
 };
 
 export type IPlayerHandles = {
@@ -87,8 +85,6 @@ export function PlayerLayer({
   audioRef,
   videoRef,
   index,
-  currentVideoIndex,
-  isCentered,
 }: IProps) {
   const [videoPlayed, setVideoPlayed] = useState(true);
   const [audioPlayed, setAudioPlayed] = useState(!audioRef.current?.muted);
@@ -106,9 +102,7 @@ export function PlayerLayer({
           data={data}
           audioRef={audioRef}
           videoRef={videoRef}
-          isCentered={isCentered}
           index={index}
-          currentVideoIndex={currentVideoIndex}
           playerHandlesRef={playerHandlesRef}
         />
 

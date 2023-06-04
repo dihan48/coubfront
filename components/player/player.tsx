@@ -9,6 +9,7 @@ import {
 import { Item } from "@/pages";
 import { IPlayerHandles } from "../playerContainer/playerContainer";
 import { useAudioPlayed, useVideoPlayed } from "../playerContainer/playerLayer";
+import { useCurrentVideoIndex } from "../videoList/videoList";
 
 import styles from "./player.module.css";
 
@@ -16,9 +17,7 @@ type IProps = {
   data: Item;
   audioRef: RefObject<HTMLAudioElement>;
   videoRef: RefObject<HTMLVideoElement>;
-  isCentered: boolean;
   index: number;
-  currentVideoIndex: number;
   playerHandlesRef: MutableRefObject<IPlayerHandles>;
 };
 
@@ -26,19 +25,20 @@ export function Player({
   data,
   audioRef,
   videoRef,
-  isCentered,
   index,
-  currentVideoIndex,
   playerHandlesRef,
 }: IProps) {
   const { permalink, audioMed, title } = data;
 
   const [videoPlayed, setVideoPlayed] = useVideoPlayed();
   const [audioPlayed, setAudioPlayed] = useAudioPlayed();
+  const currentVideoIndex = useCurrentVideoIndex();
 
   const playerRef = useRef<HTMLDivElement>(null);
   const audioCanPlayRef = useRef(false);
   const videoCanPlayRef = useRef(false);
+
+  const isCentered = index === currentVideoIndex;
 
   const tryPlay = useCallback(
     function () {
@@ -122,7 +122,7 @@ export function Player({
   playerHandlesRef.current.soundOn = soundOn;
 
   useEffect(() => {
-    if (index === currentVideoIndex) {
+    if (isCentered) {
       const audio = audioRef.current;
       const video = videoRef.current;
       const player = playerRef.current;
@@ -160,7 +160,7 @@ export function Player({
         };
       }
     }
-  }, [index, currentVideoIndex, audioRef, videoRef, data, tryPlay]);
+  }, [isCentered, audioRef, videoRef, data, tryPlay]);
 
   useEffect(
     () => void (isCentered && videoPlayed ? tryPlay() : stop()),
@@ -175,7 +175,7 @@ export function Player({
       <Image
         src={data.picture || ""}
         alt=""
-        style={currentVideoIndex === index ? {} : { opacity: 0.3 }}
+        style={isCentered ? {} : { opacity: 0.3 }}
         className={styles.preview_image}
         width={960}
         height={960}

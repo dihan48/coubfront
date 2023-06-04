@@ -1,4 +1,4 @@
-import { RefObject, useEffect, useRef, useState } from "react";
+import { MutableRefObject, RefObject, memo, useEffect, useRef } from "react";
 import { Item } from "@/pages";
 import { PlayerLayer } from "./playerLayer";
 
@@ -9,11 +9,9 @@ type IProps = {
   audioRef: RefObject<HTMLAudioElement>;
   videoRef: RefObject<HTMLVideoElement>;
   index: number;
-  page: number;
-  setPage: React.Dispatch<React.SetStateAction<number>> | null;
-  setCurrentVideoIndex: React.Dispatch<React.SetStateAction<number>>;
+  mapItemsRef: MutableRefObject<Map<Element, { index: number }>>;
+  observerRef: MutableRefObject<IntersectionObserver | undefined>;
   isShow: boolean;
-  currentVideoIndex: number;
 };
 
 export type IPlayerHandles = {
@@ -22,59 +20,41 @@ export type IPlayerHandles = {
   soundOn: () => void;
 };
 
-export function PlayerContainer({
+export const PlayerContainer = memo(function PlayerContainer({
   data,
   audioRef,
   videoRef,
   index,
-  page,
-  setPage,
-  setCurrentVideoIndex,
+  mapItemsRef,
+  observerRef,
   isShow,
-  currentVideoIndex,
 }: IProps) {
-  const [isCentered, setIsCentered] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    const options = {
-      threshold: 0.75,
-    };
-
-    const callback = (entries: IntersectionObserverEntry[]) => {
-      entries.forEach((entry) => {
-        if (entry.isIntersecting) {
-          setCurrentVideoIndex(index);
-          setPage?.(page + 1);
-        }
-        setIsCentered(entry.isIntersecting);
-      });
-    };
-
-    const observer = new IntersectionObserver(callback, options);
-
     const element = ref.current;
-    if (element) {
+    const observer = observerRef.current;
+    if (element && observer) {
+      mapItemsRef.current.set(element, { index });
+
       observer.observe(element);
 
       return () => {
         observer.unobserve(element);
       };
     }
-  }, [setCurrentVideoIndex, index, page, setPage]);
+  }, [index, mapItemsRef, observerRef]);
 
   return (
     <div className={styles.container} ref={ref}>
       {isShow && (
         <PlayerLayer
-          data={data}
+          data={data} // TODO context
           audioRef={audioRef}
           videoRef={videoRef}
           index={index}
-          currentVideoIndex={currentVideoIndex}
-          isCentered={isCentered}
         />
       )}
     </div>
   );
-}
+});

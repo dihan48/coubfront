@@ -1,10 +1,7 @@
 import {
-  Dispatch,
-  SetStateAction,
   createContext,
   useContext,
   useEffect,
-  useLayoutEffect,
   useMemo,
   useRef,
   useState,
@@ -12,12 +9,10 @@ import {
 import { PlayerContainer } from "../playerContainer/playerContainer";
 import { Item } from "@/pages";
 
-const IsInteractedContext = createContext<
-  [boolean, Dispatch<SetStateAction<boolean>>]
->([false, () => null]);
+const CurrentVideoIndexContext = createContext<number>(0);
 
-export function useIsInteracted() {
-  const context = useContext(IsInteractedContext);
+export function useCurrentVideoIndex() {
+  const context = useContext(CurrentVideoIndexContext);
   if (context === undefined) {
     throw new Error(
       "useIsInteracted must be used within a IsInteractedContext.Provider"
@@ -26,18 +21,42 @@ export function useIsInteracted() {
   return context;
 }
 
-const SetIsInteractedContext = createContext<Dispatch<SetStateAction<boolean>>>(
-  () => null
-);
+function createAudio() {
+  if (typeof document !== "object") return null;
 
-export function useSetIsInteracted() {
-  const context = useContext(SetIsInteractedContext);
-  if (context === undefined) {
-    throw new Error(
-      "useSetIsInteracted must be used within a SetIsInteractedContext.Provider"
-    );
-  }
-  return context;
+  const audio = document.createElement("audio");
+  audio.src = "";
+  audio.controls = false;
+  audio.hidden = true;
+  audio.preload = "auto";
+  audio.muted = false;
+  audio.loop = true;
+  audio.autoplay = false;
+  audio.setAttribute("muted", "");
+  audio.volume = 0.05;
+
+  return audio;
+}
+
+function createVideo() {
+  if (typeof document !== "object") return null;
+
+  const video = document.createElement("video");
+  video.src = "";
+  video.controls = false;
+  video.preload = "auto";
+  video.muted = true;
+  video.loop = true;
+  video.autoplay = false;
+  video.setAttribute("muted", "");
+  video.setAttribute("playsinline", "");
+
+  video.style.width = "100%";
+  video.style.height = "100%";
+  video.style.maxWidth = "100%";
+  video.style.maxHeight = "100%";
+
+  return video;
 }
 
 export function VideoList({ list }: { list: Item[] }) {
@@ -45,65 +64,50 @@ export function VideoList({ list }: { list: Item[] }) {
   const [currentVideoIndex, setCurrentVideoIndex] = useState(0);
   const [totalList, setTotalList] = useState(list);
   const [loading, setLoading] = useState(false);
-  const [isInteracted, setIsInteracted] = useState(true);
 
-  const audioRef = useRef<HTMLAudioElement | null>(null);
-  const videoRef = useRef<HTMLVideoElement | null>(null);
+  const audio = useMemo<HTMLAudioElement | null>(createAudio, []);
+  const video = useMemo<HTMLVideoElement | null>(createVideo, []);
 
-  useLayoutEffect(() => {
-    if (videoRef.current) return; // bypassing the strict mode double useEffect
-    if (audioRef.current) return; // bypassing the strict mode double useEffect
+  const audioRef = useRef<HTMLAudioElement | null>(audio);
+  const videoRef = useRef<HTMLVideoElement | null>(video);
 
-    const audio = document.createElement("audio");
-    audio.src = "";
-    audio.controls = true;
-    audio.preload = "auto";
-    audio.muted = false;
-    audio.loop = true;
-    audio.autoplay = false;
-    audio.setAttribute("muted", "");
-    // audio.setAttribute("playsinline", "");
-    audio.volume = 0.05;
+  const mapItemsRef = useRef<Map<Element, { index: number }>>(new Map());
+  const observerRef = useRef<IntersectionObserver>();
 
-    audio.style.position = "fixed";
-    audio.style.top = "auto";
-    audio.style.bottom = "100px";
-    audio.style.zIndex = "100";
+  useEffect(() => {
+    const options = {
+      threshold: 0.75,
+    };
 
-    document.body.append(audio);
+    const callback = (entries: IntersectionObserverEntry[]) => {
+      entries.forEach((entry) => {
+        const obj = mapItemsRef.current.get(entry.target);
+        if (obj && entry.isIntersecting) {
+          setCurrentVideoIndex(obj.index);
+        }
+      });
+    };
 
-    audioRef.current = audio;
-
-    const video = document.createElement("video");
-    video.src = "";
-    video.controls = false;
-    video.preload = "auto";
-    video.muted = true;
-    video.loop = true;
-    video.autoplay = false;
-    video.setAttribute("muted", "");
-    video.setAttribute("playsinline", "");
-    video.style.width = "100%";
-    video.style.height = "100%";
-    video.style.maxWidth = "100%";
-    video.style.maxHeight = "100%";
-
-    videoRef.current = video;
+    const observer = new IntersectionObserver(callback, options);
+    observerRef.current = observer;
 
     return () => {
-      // audio.remove();
-      // video.remove();
+      observer.disconnect();
     };
   }, []);
 
   useEffect(() => {
-    if (page !== 1) {
+    if (audioRef.current) document.body.append(audioRef.current);
+  }, []);
+
+  useEffect(() => {
+    if (loading === false && currentVideoIndex >= totalList.length - 6) {
       setLoading(true);
 
       try {
         (async () => {
-          const { coubs } = await fetch(`/api/hello?page=${page}`).then((res) =>
-            res.json()
+          const { coubs } = await fetch(`/api/hello?page=${page + 1}`).then(
+            (res) => res.json()
           );
           setTotalList((prev) => {
             const c: Item[] = [];
@@ -112,47 +116,35 @@ export function VideoList({ list }: { list: Item[] }) {
             ).forEach((x) => c.push(x));
             return c;
           });
+          setPage((p) => ++p);
           setLoading(false);
         })();
       } catch (error) {
         setLoading(false);
       }
     }
-  }, [page]);
-
-  const value = useMemo<[boolean, Dispatch<SetStateAction<boolean>>]>(
-    () => [isInteracted, setIsInteracted],
-    [isInteracted, setIsInteracted]
-  );
+  }, [totalList.length, currentVideoIndex, loading, page]);
 
   if (totalList == null) return null;
 
   return (
-    <SetIsInteractedContext.Provider value={setIsInteracted}>
-      <IsInteractedContext.Provider value={value}>
-        <div style={{ position: "fixed", top: "20px", left: "20px" }}>
-          {page} {currentVideoIndex}
-        </div>
-        {totalList.map((item, index) => (
-          <PlayerContainer
-            key={item.permalink}
-            data={item}
-            audioRef={audioRef}
-            videoRef={videoRef}
-            index={index}
-            page={page}
-            setPage={
-              index >= totalList.length - 6 && loading === false
-                ? setPage
-                : null
-            }
-            setCurrentVideoIndex={setCurrentVideoIndex}
-            isShow={getIsShowPlayer(currentVideoIndex, index)}
-            currentVideoIndex={currentVideoIndex}
-          />
-        ))}
-      </IsInteractedContext.Provider>
-    </SetIsInteractedContext.Provider>
+    <CurrentVideoIndexContext.Provider value={currentVideoIndex}>
+      <div style={{ position: "fixed", top: "20px", left: "20px" }}>
+        {page} {currentVideoIndex}
+      </div>
+      {totalList.map((item, index) => (
+        <PlayerContainer
+          key={item.permalink}
+          data={item}
+          audioRef={audioRef}
+          videoRef={videoRef}
+          index={index}
+          isShow={getIsShowPlayer(currentVideoIndex, index)}
+          mapItemsRef={mapItemsRef}
+          observerRef={observerRef}
+        />
+      ))}
+    </CurrentVideoIndexContext.Provider>
   );
 }
 
