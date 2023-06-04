@@ -168,7 +168,18 @@ export function Player({
   );
 
   return (
-    <div className={styles.container}>
+    <div
+      className={styles.container}
+      style={
+        isCentered
+          ? {}
+          : {
+              transform: "scale(0.85)",
+              borderRadius: "14px",
+              borderWidth: "1px",
+            }
+      }
+    >
       <a href={`https://coub.com/view/${permalink}`} className={styles.link}>
         {title}
       </a>
