@@ -1,110 +1,93 @@
-"use client";
-
-import { RefObject, useCallback, useEffect, useRef, useState } from "react";
+import Image from "next/image";
+import {
+  MutableRefObject,
+  RefObject,
+  useCallback,
+  useEffect,
+  useRef,
+} from "react";
+import { Item } from "@/pages";
+import { IPlayerHandles } from "../playerContainer/playerContainer";
+import { useAudioPlayed, useVideoPlayed } from "../playerContainer/playerLayer";
 
 import styles from "./player.module.css";
-import { Item } from "@/pages";
-import Image from "next/image";
 
-type IProps =
-  {
-    data: Item,
-    audioRef: RefObject<HTMLAudioElement>,
-    videoRef: RefObject<HTMLVideoElement>,
-    isPlay: boolean,
-    isInteracted: boolean,
-    setIsInteracted: React.Dispatch<React.SetStateAction<boolean>>
-    index: number,
-    currentVideoIndex: number
-  }
+type IProps = {
+  data: Item;
+  audioRef: RefObject<HTMLAudioElement>;
+  videoRef: RefObject<HTMLVideoElement>;
+  isCentered: boolean;
+  index: number;
+  currentVideoIndex: number;
+  playerHandlesRef: MutableRefObject<IPlayerHandles>;
+};
 
-export function Player({ data, audioRef, videoRef, isPlay, isInteracted, setIsInteracted, index, currentVideoIndex }: IProps) {
-  const {
-    permalink,
-    videoMed,
-    videoHigh,
-    videoHigher,
-    audioMed,
-    title,
-    picture,
-  } = data;
+export function Player({
+  data,
+  audioRef,
+  videoRef,
+  isCentered,
+  index,
+  currentVideoIndex,
+  playerHandlesRef,
+}: IProps) {
+  const { permalink, audioMed, title } = data;
 
-  const [isSoundOn, setIsSoundOn] = useState(true);
-  const [isPlayed, setIsPlayed] = useState(false);
+  const [videoPlayed, setVideoPlayed] = useVideoPlayed();
+  const [audioPlayed, setAudioPlayed] = useAudioPlayed();
 
   const playerRef = useRef<HTMLDivElement>(null);
   const audioCanPlayRef = useRef(false);
   const videoCanPlayRef = useRef(false);
 
-  const play = useCallback(
-    async function () {
+  const tryPlay = useCallback(
+    function () {
       const audio = audioRef.current;
       const video = videoRef.current;
 
-      if (audio && video) {
-        audio.src = audioMed?.url || "";
+      if (
+        audio &&
+        video &&
+        audioCanPlayRef.current &&
+        videoCanPlayRef.current
+      ) {
+        Promise.all([
+          audio
+            .play()
+            .then(() => true)
+            .catch(() => false),
+          video
+            .play()
+            .then(() => true)
+            .catch(() => false),
+        ]).then((values) => {
+          const [audioPlay, videoPlay] = values;
 
-        video.src = videoMed?.url || "";
-
-        const winWidth = typeof window === "object" ? window.innerWidth : 0;
-
-        if (winWidth >= 1200 && winWidth < 1560) {
-          video.src = videoHigh?.url || videoMed?.url || "";
-        }
-
-        if (winWidth >= 1560) {
-          video.src = videoHigher?.url || videoMed?.url || "";
-        }
-
-        video.load();
-        audio.load();
-
-        const audioCanPlay = () => {
-          audio.removeEventListener("canplay", audioCanPlay);
-          console.log("audio canplay");
-          audioCanPlayRef.current = true;
-          play();
-        }
-
-        const videoCanPlay = () => {
-          video.removeEventListener("canplay", videoCanPlay);
-          console.log("video canplay");
-          videoCanPlayRef.current = true;
-          play();
-        }
-
-        const play = () => {
-          if (audioCanPlayRef.current && videoCanPlayRef.current) {
-            const audio = audioRef.current;
-            const video = videoRef.current;
-
-            if (video && audio) {
-              audio.play().then(() => {
-                console.log("audio.play")
-              }).catch((error) => {
-                console.log("audio.play error: ", error)
-              });
-
-              video.play().then(() => {
-                console.log("video.play")
-              }).catch((error) => {
-                console.log("video.play error: ", error)
-              });
-            }
+          if (audioPlay === false && videoPlay === false) {
+            setVideoPlayed(false);
           }
-        }
 
-        audio.addEventListener("canplay", audioCanPlay);
-        video.addEventListener("canplay", videoCanPlay);
+          if (audioPlay === false && videoPlay === true) {
+            setAudioPlayed(false);
+            setVideoPlayed(true);
+
+            audio.muted = true;
+          }
+
+          if (audioPlay === true && videoPlay === true) {
+            setVideoPlayed(true);
+          }
+        });
       }
     },
-    [audioRef, audioMed?.url, videoMed?.url, videoHigh?.url, videoHigher?.url, videoRef]
+    [audioRef, videoRef, setVideoPlayed, setAudioPlayed]
   );
 
   const stop = useCallback(
     function () {
       const audio = audioRef.current;
       const video = videoRef.current;
+
       if (audio && video) {
         video.pause();
         video.currentTime = 0;
@@ -112,24 +95,31 @@ export function Player({ data, audioRef, videoRef, isPlay, isInteracted, setIsIn
         audio.pause();
         audio.currentTime = 0;
 
-        setIsPlayed(false);
+        setVideoPlayed(false);
       }
     },
-    [audioRef, videoRef]
+    [audioRef, videoRef, setVideoPlayed]
   );
 
-  useEffect(() => {
-    if (isPlay) {
-      if (isPlayed === false) {
-        play();
+  const soundOn = useCallback(
+    function () {
+      const audio = audioRef.current;
+      const video = videoRef.current;
+      if (audio && video) {
+        audio.muted = false;
+
+        audio.play().then(() => {
+          audio.currentTime = video.currentTime;
+          setAudioPlayed(true);
+        });
       }
-    } else {
-      if (isPlayed) {
-        stop();
-        setIsSoundOn(true);
-      }
-    }
-  }, [isPlay, isPlayed, play, stop])
+    },
+    [audioRef, videoRef, setAudioPlayed]
+  );
+
+  playerHandlesRef.current.play = tryPlay;
+  playerHandlesRef.current.pause = stop;
+  playerHandlesRef.current.soundOn = soundOn;
 
   useEffect(() => {
     if (index === currentVideoIndex) {
@@ -138,109 +128,65 @@ export function Player({ data, audioRef, videoRef, isPlay, isInteracted, setIsIn
       const player = playerRef.current;
 
       if (audio && video && player) {
-        console.log("audio && video && player");
-
         player.append(video);
 
+        const { audioMed, picture } = data;
+
         audio.src = audioMed?.url || "";
-
-        const winWidth = typeof window === "object" ? window.innerWidth : 0;
-
-        video.src = videoMed?.url || "";
-        if (winWidth >= 1200 && winWidth < 1560) {
-          video.src = videoHigh?.url || videoMed?.url || "";
-        }
-
-        if (winWidth >= 1560) {
-          video.src = videoHigher?.url || videoMed?.url || "";
-        }
+        video.src = getVideoSrc(data);
+        video.poster = picture || "";
 
         video.load();
         audio.load();
-      } else {
-        console.log("!!! audio && video && player");
-        console.log({
-          audio,
-          video,
-          player,
-        })
+
+        const audioCanPlay = () => {
+          audio.removeEventListener("canplay", audioCanPlay);
+          audioCanPlayRef.current = true;
+          tryPlay();
+        };
+
+        const videoCanPlay = () => {
+          video.removeEventListener("canplay", videoCanPlay);
+          videoCanPlayRef.current = true;
+          tryPlay();
+        };
+
+        audio.addEventListener("canplay", audioCanPlay);
+        video.addEventListener("canplay", videoCanPlay);
+
+        return () => {
+          audio.removeEventListener("canplay", audioCanPlay);
+          video.removeEventListener("canplay", videoCanPlay);
+        };
       }
     }
-  }, [index, currentVideoIndex, audioRef, videoRef, audioMed?.url, videoMed?.url, videoHigh?.url, videoHigher?.url])
+  }, [index, currentVideoIndex, audioRef, videoRef, data, tryPlay]);
+
+  useEffect(
+    () => void (isCentered && videoPlayed ? tryPlay() : stop()),
+    [isCentered, videoPlayed, tryPlay, stop]
+  );
 
   return (
-    <>    {isSoundOn === false ? (
-      <button
-        className={styles.sound_button}
-        onClick={() => {
-          setIsSoundOn(true);
-          if (audioRef.current) {
-            audioRef.current
-              .play()
-              .then(() => {
-                if (audioRef.current && videoRef.current) {
-                  audioRef.current.currentTime = videoRef.current.currentTime;
-                }
-              })
-              .catch((error) => {
-                console.log(error);
-                setIsSoundOn(false);
-              });
-          }
-        }}
-      >
-        sound on
-      </button>
-    ) : null}
-      <div className={styles.container} onClick={() => {
-        firstApplePlay(videoRef, audioRef);
-        setIsInteracted(v => !v);
-      }}>
-        <a href={`https://coub.com/view/${permalink}`} className={styles.link}>{title}</a>
-        {isInteracted ?
-          null :
-          <button className={styles.play_button}>
-            <svg viewBox="-0.5 0 7 7" xmlns="http://www.w3.org/2000/svg">
-              <path
-                d="M5.495 2.573 1.5.143C.832-.266 0 .25 0 1.068V5.93c0 .82.832 1.333 1.5.927l3.995-2.43c.673-.41.673-1.445 0-1.855"
-                fill="#fff" fillRule="evenodd" />
-            </svg>
-          </button>
-        }
-        <Image
-          src={data.picture || ""}
-          alt=""
-          style={currentVideoIndex === index ? {} : { opacity: 0.3 }}
-          className={styles.preview_image}
-          width={960}
-          height={960}
-          placeholder={data.blurDataURL ? "blur" : "empty"}
-          blurDataURL={data.blurDataURL || undefined}
-        />
-        <video hidden src={getVideoSrc(data)} onCanPlay={() => { console.log("video hidden canplay") }} />
-        <audio hidden src={audioMed?.url || ""} onCanPlay={() => { console.log("audio hidden canplay") }} />
-        <div ref={playerRef} className={styles.player} />
-      </div>
-    </>
+    <div className={styles.container}>
+      <a href={`https://coub.com/view/${permalink}`} className={styles.link}>
+        {title}
+      </a>
+      <Image
+        src={data.picture || ""}
+        alt=""
+        style={currentVideoIndex === index ? {} : { opacity: 0.3 }}
+        className={styles.preview_image}
+        width={960}
+        height={960}
+        placeholder={data.blurDataURL ? "blur" : "empty"}
+        blurDataURL={data.blurDataURL || undefined}
+      />
+      <video hidden src={getVideoSrc(data)} />
+      <audio hidden src={audioMed?.url || ""} />
+      <div ref={playerRef} className={styles.player} />
+    </div>
   );
-}
-
-function firstApplePlay(videoRef: RefObject<HTMLVideoElement>, audioRef: RefObject<HTMLAudioElement>) {
-  const video = videoRef.current;
-  const audio = audioRef.current;
-
-  if (video && audio) {
-    console.log(video, audio);
-    console.log(video.src, audio.src);
-
-    video.play();
-    video.pause();
-    audio.currentTime = 0;
-
-    audio.play();
-    audio.pause();
-    video.currentTime = 0;
-  }
 }
 
 function getVideoSrc(data: Item) {

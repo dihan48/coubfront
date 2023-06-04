@@ -1,26 +1,39 @@
-import { RefObject, useCallback, useEffect, useRef, useState } from "react";
-import { Player } from "../player/player";
+import { RefObject, useEffect, useRef, useState } from "react";
 import { Item } from "@/pages";
+import { PlayerLayer } from "./playerLayer";
 
-import styles from "./playerContainer.module.css"
+import styles from "./playerContainer.module.css";
 
-type IProps =
-  {
-    data: Item,
-    audioRef: RefObject<HTMLAudioElement>,
-    videoRef: RefObject<HTMLVideoElement>,
-    index: number,
-    page: number,
-    setPage: React.Dispatch<React.SetStateAction<number>> | null,
-    setCurrentVideoIndex: React.Dispatch<React.SetStateAction<number>>,
-    isShow: boolean
-    isInteracted: boolean,
-    setIsInteracted: React.Dispatch<React.SetStateAction<boolean>>,
-    currentVideoIndex: number
-  }
+type IProps = {
+  data: Item;
+  audioRef: RefObject<HTMLAudioElement>;
+  videoRef: RefObject<HTMLVideoElement>;
+  index: number;
+  page: number;
+  setPage: React.Dispatch<React.SetStateAction<number>> | null;
+  setCurrentVideoIndex: React.Dispatch<React.SetStateAction<number>>;
+  isShow: boolean;
+  currentVideoIndex: number;
+};
 
-export function PlayerContainer({ data, audioRef, videoRef, index, page, setPage, setCurrentVideoIndex, isShow, isInteracted, setIsInteracted, currentVideoIndex }: IProps) {
-  const [isPlay, setIsPlay] = useState(false);
+export type IPlayerHandles = {
+  play: () => void;
+  pause: () => void;
+  soundOn: () => void;
+};
+
+export function PlayerContainer({
+  data,
+  audioRef,
+  videoRef,
+  index,
+  page,
+  setPage,
+  setCurrentVideoIndex,
+  isShow,
+  currentVideoIndex,
+}: IProps) {
+  const [isCentered, setIsCentered] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -28,16 +41,15 @@ export function PlayerContainer({ data, audioRef, videoRef, index, page, setPage
       threshold: 0.75,
     };
 
-    const callback = (entries: IntersectionObserverEntry[], observer: IntersectionObserver) => {
+    const callback = (entries: IntersectionObserverEntry[]) => {
       entries.forEach((entry) => {
         if (entry.isIntersecting) {
           setCurrentVideoIndex(index);
           setPage?.(page + 1);
         }
-        console.log({ index, setIsPlay: isInteracted && entry.isIntersecting })
-        setIsPlay(isInteracted && entry.isIntersecting);
+        setIsCentered(entry.isIntersecting);
       });
-    }
+    };
 
     const observer = new IntersectionObserver(callback, options);
 
@@ -49,22 +61,20 @@ export function PlayerContainer({ data, audioRef, videoRef, index, page, setPage
         observer.unobserve(element);
       };
     }
-  }, [isInteracted, setCurrentVideoIndex, index, page, setPage]);
+  }, [setCurrentVideoIndex, index, page, setPage]);
 
   return (
     <div className={styles.container} ref={ref}>
-      {isShow ?
-        <Player
+      {isShow && (
+        <PlayerLayer
           data={data}
           audioRef={audioRef}
           videoRef={videoRef}
-          isPlay={isPlay}
-          isInteracted={isInteracted}
-          setIsInteracted={setIsInteracted}
           index={index}
           currentVideoIndex={currentVideoIndex}
+          isCentered={isCentered}
         />
-        : null}
+      )}
     </div>
   );
 }
