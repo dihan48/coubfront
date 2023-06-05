@@ -10,7 +10,7 @@ type IProps = {
   videoRef: RefObject<HTMLVideoElement>;
   index: number;
   mapItemsRef: MutableRefObject<Map<Element, { index: number }>>;
-  observerRef: MutableRefObject<IntersectionObserver | undefined>;
+  observerRef: MutableRefObject<IntersectionObserver | null>;
   isShow: boolean;
 };
 
@@ -49,7 +49,7 @@ export const PlayerContainer = memo(function PlayerContainer({
     <div className={styles.container} ref={ref}>
       {isShow && (
         <PlayerLayer
-          data={data} // TODO context
+          data={data}
           audioRef={audioRef}
           videoRef={videoRef}
           index={index}

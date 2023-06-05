@@ -8,8 +8,11 @@ import {
 } from "react";
 import { Item } from "@/pages";
 import { IPlayerHandles } from "../playerContainer/playerContainer";
-import { useAudioPlayed, useVideoPlayed } from "../playerContainer/playerLayer";
-import { useCurrentVideoIndex } from "../videoList/videoList";
+import {
+  useAudioPlayed,
+  useCurrentVideoIndex,
+  useVideoPlayed,
+} from "../videoList/videoList";
 
 import styles from "./player.module.css";
 
@@ -85,6 +88,7 @@ export function Player({
 
   const stop = useCallback(
     function () {
+      console.log("stop");
       const audio = audioRef.current;
       const video = videoRef.current;
 
@@ -163,7 +167,7 @@ export function Player({
   }, [isCentered, audioRef, videoRef, data, tryPlay]);
 
   useEffect(
-    () => void (isCentered && videoPlayed ? tryPlay() : stop()),
+    () => void (isCentered ? (videoPlayed ? tryPlay() : stop()) : 0),
     [isCentered, videoPlayed, tryPlay, stop]
   );
 

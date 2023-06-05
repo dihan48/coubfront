@@ -1,71 +1,7 @@
-import {
-  Dispatch,
-  RefObject,
-  SetStateAction,
-  createContext,
-  useContext,
-  useRef,
-  useState,
-} from "react";
+import { RefObject, useRef } from "react";
 import { Player } from "../player/player";
 import { Item } from "@/pages";
 import { PlayerUI } from "../playUI/playerUI";
-
-const VideoPlayedContext = createContext<
-  [boolean, Dispatch<SetStateAction<boolean>>]
->([false, () => null]);
-
-export function useVideoPlayed() {
-  const context = useContext(VideoPlayedContext);
-  if (context === undefined) {
-    throw new Error(
-      "useVideoPlayed must be used within a VideoPlayedContext.Provider"
-    );
-  }
-  return context;
-}
-
-const SetVideoPlayedContext = createContext<Dispatch<SetStateAction<boolean>>>(
-  () => null
-);
-
-export function useSetVideoPlayed() {
-  const context = useContext(SetVideoPlayedContext);
-  if (context === undefined) {
-    throw new Error(
-      "useSetVideoPlayed must be used within a SetVideoPlayedContext.Provider"
-    );
-  }
-  return context;
-}
-
-const AudioPlayedContext = createContext<
-  [boolean, Dispatch<SetStateAction<boolean>>]
->([false, () => null]);
-
-export function useAudioPlayed() {
-  const context = useContext(AudioPlayedContext);
-  if (context === undefined) {
-    throw new Error(
-      "useAudioPlayed must be used within a AudioPlayedContext.Provider"
-    );
-  }
-  return context;
-}
-
-const SetAudioPlayedContext = createContext<Dispatch<SetStateAction<boolean>>>(
-  () => null
-);
-
-export function useSetAudioPlayed() {
-  const context = useContext(SetAudioPlayedContext);
-  if (context === undefined) {
-    throw new Error(
-      "useSetAudioPlayed must be used within a SetAudioPlayedContext.Provider"
-    );
-  }
-  return context;
-}
 
 type IProps = {
   data: Item;
@@ -80,15 +16,7 @@ export type IPlayerHandles = {
   soundOn: () => void;
 };
 
-export function PlayerLayer({
-  data,
-  audioRef,
-  videoRef,
-  index,
-}: IProps) {
-  const [videoPlayed, setVideoPlayed] = useState(true);
-  const [audioPlayed, setAudioPlayed] = useState(!audioRef.current?.muted);
-
+export function PlayerLayer({ data, audioRef, videoRef, index }: IProps) {
   const playerHandlesRef = useRef<IPlayerHandles>({
     play: () => null,
     pause: () => null,
@@ -96,18 +24,16 @@ export function PlayerLayer({
   });
 
   return (
-    <VideoPlayedContext.Provider value={[videoPlayed, setVideoPlayed]}>
-      <AudioPlayedContext.Provider value={[audioPlayed, setAudioPlayed]}>
-        <Player
-          data={data}
-          audioRef={audioRef}
-          videoRef={videoRef}
-          index={index}
-          playerHandlesRef={playerHandlesRef}
-        />
+    <>
+      <Player
+        data={data}
+        audioRef={audioRef}
+        videoRef={videoRef}
+        index={index}
+        playerHandlesRef={playerHandlesRef}
+      />
 
-        <PlayerUI playerHandlesRef={playerHandlesRef} />
-      </AudioPlayedContext.Provider>
-    </VideoPlayedContext.Provider>
+      <PlayerUI playerHandlesRef={playerHandlesRef} />
+    </>
   );
 }

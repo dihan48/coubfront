@@ -1,14 +1,22 @@
 import {
+  Dispatch,
+  SetStateAction,
   createContext,
+  useCallback,
   useContext,
   useEffect,
-  useLayoutEffect,
   useMemo,
   useRef,
   useState,
 } from "react";
 import { PlayerContainer } from "../playerContainer/playerContainer";
 import { Item } from "@/pages";
+import {
+  createAudio,
+  createObserver,
+  createVideo,
+  getIsShowPlayer,
+} from "@/helpers/core";
 
 const CurrentVideoIndexContext = createContext<number>(0);
 
@@ -22,42 +30,32 @@ export function useCurrentVideoIndex() {
   return context;
 }
 
-function createAudio() {
-  if (typeof document !== "object") return null;
+const VideoPlayedContext = createContext<
+  [boolean, Dispatch<SetStateAction<boolean>>]
+>([false, () => null]);
 
-  const audio = document.createElement("audio");
-  audio.src = "";
-  audio.controls = false;
-  audio.hidden = true;
-  audio.preload = "auto";
-  audio.muted = false;
-  audio.loop = true;
-  audio.autoplay = false;
-  audio.setAttribute("muted", "");
-  audio.volume = 0.05;
-
-  return audio;
+export function useVideoPlayed() {
+  const context = useContext(VideoPlayedContext);
+  if (context === undefined) {
+    throw new Error(
+      "useVideoPlayed must be used within a VideoPlayedContext.Provider"
+    );
+  }
+  return context;
 }
 
-function createVideo() {
-  if (typeof document !== "object") return null;
+const AudioPlayedContext = createContext<
+  [boolean, Dispatch<SetStateAction<boolean>>]
+>([false, () => null]);
 
-  const video = document.createElement("video");
-  video.src = "";
-  video.controls = false;
-  video.preload = "auto";
-  video.muted = true;
-  video.loop = true;
-  video.autoplay = false;
-  video.setAttribute("muted", "");
-  video.setAttribute("playsinline", "");
-
-  video.style.width = "100%";
-  video.style.height = "100%";
-  video.style.maxWidth = "100%";
-  video.style.maxHeight = "100%";
-
-  return video;
+export function useAudioPlayed() {
+  const context = useContext(AudioPlayedContext);
+  if (context === undefined) {
+    throw new Error(
+      "useAudioPlayed must be used within a AudioPlayedContext.Provider"
+    );
+  }
+  return context;
 }
 
 export function VideoList({ list }: { list: Item[] }) {
@@ -65,6 +63,8 @@ export function VideoList({ list }: { list: Item[] }) {
   const [currentVideoIndex, setCurrentVideoIndex] = useState(0);
   const [totalList, setTotalList] = useState(list);
   const [loading, setLoading] = useState(false);
+  const [videoPlayed, setVideoPlayed] = useState(true);
+  const [audioPlayed, setAudioPlayed] = useState(true);
 
   const audio = useMemo<HTMLAudioElement | null>(createAudio, []);
   const video = useMemo<HTMLVideoElement | null>(createVideo, []);
@@ -73,29 +73,22 @@ export function VideoList({ list }: { list: Item[] }) {
   const videoRef = useRef<HTMLVideoElement | null>(video);
 
   const mapItemsRef = useRef<Map<Element, { index: number }>>(new Map());
-  const observerRef = useRef<IntersectionObserver>();
 
-  useLayoutEffect(() => {
-    const options = {
-      threshold: 0.75,
-    };
-
-    const callback = (entries: IntersectionObserverEntry[]) => {
-      entries.forEach((entry) => {
-        const obj = mapItemsRef.current.get(entry.target);
-        if (obj && entry.isIntersecting) {
-          setCurrentVideoIndex(obj.index);
-        }
-      });
-    };
-
-    const observer = new IntersectionObserver(callback, options);
-    observerRef.current = observer;
-
-    return () => {
-      observer.disconnect();
-    };
+  const callback = useCallback((entries: IntersectionObserverEntry[]) => {
+    entries.forEach((entry) => {
+      const obj = mapItemsRef.current.get(entry.target);
+      if (obj && entry.isIntersecting) {
+        setCurrentVideoIndex(obj.index);
+      }
+    });
   }, []);
+
+  const observer = useMemo<IntersectionObserver | null>(
+    () => createObserver(callback),
+    [callback]
+  );
+
+  const observerRef = useRef<IntersectionObserver>(observer);
 
   useEffect(() => {
     if (audioRef.current) document.body.append(audioRef.current);
@@ -129,26 +122,26 @@ export function VideoList({ list }: { list: Item[] }) {
   if (totalList == null) return null;
 
   return (
-    <CurrentVideoIndexContext.Provider value={currentVideoIndex}>
-      <div style={{ position: "fixed", top: "20px", left: "20px" }}>
-        {page} {currentVideoIndex}
-      </div>
-      {totalList.map((item, index) => (
-        <PlayerContainer
-          key={item.permalink}
-          data={item}
-          audioRef={audioRef}
-          videoRef={videoRef}
-          index={index}
-          isShow={getIsShowPlayer(currentVideoIndex, index)}
-          mapItemsRef={mapItemsRef}
-          observerRef={observerRef}
-        />
-      ))}
-    </CurrentVideoIndexContext.Provider>
+    <VideoPlayedContext.Provider value={[videoPlayed, setVideoPlayed]}>
+      <AudioPlayedContext.Provider value={[audioPlayed, setAudioPlayed]}>
+        <CurrentVideoIndexContext.Provider value={currentVideoIndex}>
+          <div style={{ position: "fixed", top: "20px", left: "20px" }}>
+            {page} {currentVideoIndex}
+          </div>
+          {totalList.map((item, index) => (
+            <PlayerContainer
+              key={item.permalink}
+              data={item}
+              audioRef={audioRef}
+              videoRef={videoRef}
+              index={index}
+              isShow={getIsShowPlayer(currentVideoIndex, index)}
+              mapItemsRef={mapItemsRef}
+              observerRef={observerRef}
+            />
+          ))}
+        </CurrentVideoIndexContext.Provider>
+      </AudioPlayedContext.Provider>
+    </VideoPlayedContext.Provider>
   );
-}
-
-function getIsShowPlayer(c: number, i: number) {
-  return c - 2 < i && c + 2 > i;
 }

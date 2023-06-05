@@ -1,6 +1,6 @@
 import { MutableRefObject } from "react";
 import { IPlayerHandles } from "../playerContainer/playerContainer";
-import { useAudioPlayed, useVideoPlayed } from "../playerContainer/playerLayer";
+import { useAudioPlayed, useVideoPlayed } from "../videoList/videoList";
 import { PlayButton } from "./playButton";
 import { SoundButton } from "./soundButton";
 
