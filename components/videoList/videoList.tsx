@@ -1,3 +1,4 @@
+import type { Item } from "@/pages";
 import {
   createContext,
   useCallback,
@@ -8,7 +9,6 @@ import {
   useState,
 } from "react";
 import { PlayerContainer } from "../playerContainer/playerContainer";
-import { Item } from "@/pages";
 import { createObserver, getIsShowPlayer } from "@/helpers/core";
 import { PlayerCore } from "../playerCore/playerCore";
 
@@ -24,7 +24,7 @@ export function useCurrentVideoIndex() {
   return context;
 }
 
-export function VideoList({ list }: { list: Item[] }) {
+export function VideoList({ list }: IProps) {
   const [page, setPage] = useState(1);
   const [currentVideoIndex, setCurrentVideoIndex] = useState(0);
   const [totalList, setTotalList] = useState(list);
@@ -97,4 +97,8 @@ export function VideoList({ list }: { list: Item[] }) {
       </CurrentVideoIndexContext.Provider>
     </PlayerCore>
   );
+}
+
+interface IProps {
+  list: Item[];
 }

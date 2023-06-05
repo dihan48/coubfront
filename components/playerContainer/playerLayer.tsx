@@ -1,11 +1,6 @@
+import type { Item } from "@/pages";
 import { Player } from "../player/player";
-import { Item } from "@/pages";
 import { PlayerUI } from "../playUI/playerUI";
-
-type IProps = {
-  data: Item;
-  index: number;
-};
 
 export function PlayerLayer({ data, index }: IProps) {
   return (
@@ -14,4 +9,9 @@ export function PlayerLayer({ data, index }: IProps) {
       <PlayerUI />
     </>
   );
+}
+
+interface IProps {
+  data: Item;
+  index: number;
 }

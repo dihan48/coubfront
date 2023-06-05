@@ -1,8 +1,6 @@
+import type { Item } from "@/pages";
+import type { Dispatch, ReactElement, RefObject, SetStateAction } from "react";
 import {
-  Dispatch,
-  ReactElement,
-  RefObject,
-  SetStateAction,
   createContext,
   useCallback,
   useContext,
@@ -12,59 +10,21 @@ import {
   useState,
 } from "react";
 import { createAudio, createVideo } from "@/helpers/core";
-import { Item } from "@/pages";
-
-export interface IPlayerHandles {
-  play: () => void;
-  pause: () => void;
-  soundOn: () => void;
-  setupPlayer: (playerRef: RefObject<HTMLDivElement>, data: Item) => void;
-}
 
 const VideoPlayedContext = createContext<
   [boolean, Dispatch<SetStateAction<boolean>>]
 >([false, () => null]);
 
-export function useVideoPlayed() {
-  const context = useContext(VideoPlayedContext);
-  if (context === undefined) {
-    throw new Error(
-      "useVideoPlayed must be used within a VideoPlayedContext.Provider"
-    );
-  }
-  return context;
-}
-
 const AudioPlayedContext = createContext<
   [boolean, Dispatch<SetStateAction<boolean>>]
 >([false, () => null]);
 
-export function useAudioPlayed() {
-  const context = useContext(AudioPlayedContext);
-  if (context === undefined) {
-    throw new Error(
-      "useAudioPlayed must be used within a AudioPlayedContext.Provider"
-    );
-  }
-  return context;
-}
-
-const PlayerHandlesContext = createContext<IPlayerHandles>({
-  play: () => void 0,
-  pause: () => void 0,
+const PlayerHandlesContext = createContext<PlayerHandles>({
+  tryPlay: () => void 0,
+  stop: () => void 0,
   soundOn: () => void 0,
   setupPlayer: () => void 0,
 });
-
-export function usePlayerHandles() {
-  const context = useContext(PlayerHandlesContext);
-  if (context === undefined) {
-    throw new Error(
-      "usePlayerHandles must be used within a PlayerHandlesContext.Provider"
-    );
-  }
-  return context;
-}
 
 export function PlayerCore({ children }: { children: ReactElement }) {
   const [videoPlayed, setVideoPlayed] = useState(true);
@@ -189,12 +149,7 @@ export function PlayerCore({ children }: { children: ReactElement }) {
   }, []);
 
   const playerHandles = useMemo(
-    () => ({
-      play: tryPlay,
-      pause: stop,
-      soundOn: soundOn,
-      setupPlayer: setupPlayer,
-    }),
+    () => ({ tryPlay, stop, soundOn, setupPlayer }),
     [tryPlay, stop, soundOn, setupPlayer]
   );
 
@@ -208,6 +163,13 @@ export function PlayerCore({ children }: { children: ReactElement }) {
     </PlayerHandlesContext.Provider>
   );
 }
+
+export type PlayerHandles = {
+  tryPlay: () => void;
+  stop: () => void;
+  soundOn: () => void;
+  setupPlayer: (playerRef: RefObject<HTMLDivElement>, data: Item) => void;
+};
 
 export function getVideoSrc(data: Item) {
   const { videoMed, videoHigh, videoHigher } = data;
@@ -224,4 +186,34 @@ export function getVideoSrc(data: Item) {
   }
 
   return videoSrc;
+}
+
+export function useVideoPlayed() {
+  const context = useContext(VideoPlayedContext);
+  if (context === undefined) {
+    throw new Error(
+      "useVideoPlayed must be used within a VideoPlayedContext.Provider"
+    );
+  }
+  return context;
+}
+
+export function useAudioPlayed() {
+  const context = useContext(AudioPlayedContext);
+  if (context === undefined) {
+    throw new Error(
+      "useAudioPlayed must be used within a AudioPlayedContext.Provider"
+    );
+  }
+  return context;
+}
+
+export function usePlayerHandles() {
+  const context = useContext(PlayerHandlesContext);
+  if (context === undefined) {
+    throw new Error(
+      "usePlayerHandles must be used within a PlayerHandlesContext.Provider"
+    );
+  }
+  return context;
 }

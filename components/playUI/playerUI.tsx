@@ -15,7 +15,7 @@ export function PlayerUI() {
       <div
         className={styles.container}
         onClick={() => {
-          videoPlayed ? playerHandles.pause() : playerHandles.play();
+          videoPlayed ? playerHandles.stop() : playerHandles.tryPlay();
         }}
       >
         {videoPlayed === false && <PlayButton />}

@@ -1,6 +1,6 @@
+import type { Item } from "@/pages";
 import Image from "next/image";
 import { useCallback, useEffect, useRef } from "react";
-import { Item } from "@/pages";
 import { useCurrentVideoIndex } from "../videoList/videoList";
 import {
   getVideoSrc,
@@ -9,11 +9,6 @@ import {
 } from "../playerCore/playerCore";
 
 import styles from "./player.module.css";
-
-type IProps = {
-  data: Item;
-  index: number;
-};
 
 export function Player({ data, index }: IProps) {
   const { permalink, audioMed, title } = data;
@@ -42,8 +37,8 @@ export function Player({ data, index }: IProps) {
     () =>
       void (isCentered
         ? videoPlayed
-          ? playerHandles.play()
-          : playerHandles.pause()
+          ? playerHandles.tryPlay()
+          : playerHandles.stop()
         : 0),
     [isCentered, videoPlayed, playerHandles]
   );
@@ -79,4 +74,9 @@ export function Player({ data, index }: IProps) {
       <div ref={playerRef} className={styles.player} />
     </div>
   );
+}
+
+interface IProps {
+  data: Item;
+  index: number;
 }

@@ -1,22 +1,9 @@
-import { MutableRefObject, RefObject, memo, useEffect, useRef } from "react";
-import { Item } from "@/pages";
+import type { Item } from "@/pages";
+import type { MutableRefObject, RefObject } from "react";
+import { memo, useEffect, useRef } from "react";
 import { PlayerLayer } from "./playerLayer";
 
 import styles from "./playerContainer.module.css";
-
-type IProps = {
-  data: Item;
-  index: number;
-  mapItemsRef: MutableRefObject<Map<Element, { index: number }>>;
-  observerRef: MutableRefObject<IntersectionObserver | null>;
-  isShow: boolean;
-};
-
-export type IPlayerHandles = {
-  play: () => void;
-  pause: () => void;
-  soundOn: () => void;
-};
 
 export const PlayerContainer = memo(function PlayerContainer({
   data,
@@ -47,3 +34,11 @@ export const PlayerContainer = memo(function PlayerContainer({
     </div>
   );
 });
+
+interface IProps {
+  data: Item;
+  index: number;
+  mapItemsRef: MutableRefObject<Map<Element, { index: number }>>;
+  observerRef: RefObject<IntersectionObserver | null>;
+  isShow: boolean;
+}
