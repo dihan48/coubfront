@@ -1,11 +1,11 @@
-import Head from 'next/head'
+import Head from "next/head";
 import { getPlaiceholder } from "plaiceholder";
-import { Inter } from 'next/font/google'
-import { VideoList } from "../components/videoList/videoList"
+import { Inter } from "next/font/google";
+import { VideoList } from "../components/videoList/videoList";
 
-import styles from '@/styles/Home.module.css'
+import styles from "@/styles/Home.module.css";
 
-const inter = Inter({ subsets: ['latin'] })
+const inter = Inter({ subsets: ["latin"] });
 
 export default function Home({ coubs }: { coubs: Array<Item> }) {
   return (
@@ -18,12 +18,11 @@ export default function Home({ coubs }: { coubs: Array<Item> }) {
       </Head>
       <div className={styles.container}>
         <main className={`${styles.main} ${inter.className}`}>
-          {/* <pre>{JSON.stringify(coubs, undefined, 2)}</pre> */}
           <VideoList list={coubs} />
         </main>
       </div>
     </>
-  )
+  );
 }
 
 export const getStaticProps = async () => {
@@ -31,27 +30,31 @@ export const getStaticProps = async () => {
     "https://coub.com/api/v2/timeline/subscriptions/fresh?page=1"
   )
     .then((res) => res.json())
-    .then(async (data) =>
-      await Promise.all(data.coubs.map(async (item: any): Promise<Item> => {
+    .then(
+      async (data) =>
+        await Promise.all(
+          data.coubs.map(async (item: any): Promise<Item> => {
+            const buffer = await fetch(item.picture)
+              .then((res) => res.arrayBuffer())
+              .then((arrayBuffer) => Buffer.from(arrayBuffer))
+              .catch(() => null);
 
-        const buffer = await fetch(item.picture)
-          .then(res => res.arrayBuffer())
-          .then(arrayBuffer => Buffer.from(arrayBuffer))
-          .catch(() => null);
+            const { base64 } = buffer
+              ? await getPlaiceholder(buffer)
+              : { base64: null };
 
-        const { base64 } = buffer ? await getPlaiceholder(buffer) : { base64: null };
-
-        return {
-          permalink: item?.permalink || null,
-          videoMed: item?.file_versions?.html5?.video?.med || null,
-          videoHigh: item?.file_versions?.html5?.video?.high || null,
-          videoHigher: item?.file_versions?.html5?.video?.higher || null,
-          audioMed: item?.file_versions?.html5?.audio?.med || null,
-          title: item?.title || null,
-          picture: item?.picture || null,
-          blurDataURL: base64 || null,
-        };
-      })).then((values) => values)
+            return {
+              permalink: item?.permalink || null,
+              videoMed: item?.file_versions?.html5?.video?.med || null,
+              videoHigh: item?.file_versions?.html5?.video?.high || null,
+              videoHigher: item?.file_versions?.html5?.video?.higher || null,
+              audioMed: item?.file_versions?.html5?.audio?.med || null,
+              title: item?.title || null,
+              picture: item?.picture || null,
+              blurDataURL: base64 || null,
+            };
+          })
+        ).then((values) => values)
     );
 
   return {
@@ -61,12 +64,12 @@ export const getStaticProps = async () => {
 };
 
 export type Item = {
-  permalink: string | null,
-  videoMed: { "url": string, "size": number } | null,
-  videoHigh: { "url": string, "size": number } | null,
-  videoHigher: { "url": string, "size": number } | null,
-  audioMed: { "url": string, "size": number } | null,
-  title: string | null,
-  picture: string | null,
-  blurDataURL: string | null,
-}
+  permalink: string | null;
+  videoMed: { url: string; size: number } | null;
+  videoHigh: { url: string; size: number } | null;
+  videoHigher: { url: string; size: number } | null;
+  audioMed: { url: string; size: number } | null;
+  title: string | null;
+  picture: string | null;
+  blurDataURL: string | null;
+};

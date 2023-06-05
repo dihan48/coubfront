@@ -6,8 +6,6 @@ import styles from "./playerContainer.module.css";
 
 type IProps = {
   data: Item;
-  audioRef: RefObject<HTMLAudioElement>;
-  videoRef: RefObject<HTMLVideoElement>;
   index: number;
   mapItemsRef: MutableRefObject<Map<Element, { index: number }>>;
   observerRef: MutableRefObject<IntersectionObserver | null>;
@@ -22,8 +20,6 @@ export type IPlayerHandles = {
 
 export const PlayerContainer = memo(function PlayerContainer({
   data,
-  audioRef,
-  videoRef,
   index,
   mapItemsRef,
   observerRef,
@@ -47,14 +43,7 @@ export const PlayerContainer = memo(function PlayerContainer({
 
   return (
     <div className={styles.container} ref={ref}>
-      {isShow && (
-        <PlayerLayer
-          data={data}
-          audioRef={audioRef}
-          videoRef={videoRef}
-          index={index}
-        />
-      )}
+      {isShow && <PlayerLayer data={data} index={index} />}
     </div>
   );
 });

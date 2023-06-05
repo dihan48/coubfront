@@ -1,18 +1,15 @@
-import { MutableRefObject } from "react";
-import { IPlayerHandles } from "../playerContainer/playerContainer";
+import { usePlayerHandles } from "../playerCore/playerCore";
 
 import styles from "./soundButton.module.css";
 
-export function SoundButton({
-  playerHandlesRef,
-}: {
-  playerHandlesRef: MutableRefObject<IPlayerHandles>;
-}) {
+export function SoundButton() {
+  const playerHandles = usePlayerHandles();
+
   return (
     <button
       className={styles.button}
       onClick={() => {
-        playerHandlesRef.current.soundOn();
+        playerHandles.soundOn();
       }}
     >
       <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">

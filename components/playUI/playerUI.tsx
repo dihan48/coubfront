@@ -1,33 +1,27 @@
-import { MutableRefObject } from "react";
-import { IPlayerHandles } from "../playerContainer/playerContainer";
-import { useAudioPlayed, useVideoPlayed } from "../videoList/videoList";
 import { PlayButton } from "./playButton";
 import { SoundButton } from "./soundButton";
+import { useAudioPlayed, usePlayerHandles, useVideoPlayed } from "../playerCore/playerCore";
 
 import styles from "./playerUI.module.css";
 
-export function PlayerUI({
-  playerHandlesRef,
-}: {
-  playerHandlesRef: MutableRefObject<IPlayerHandles>;
-}) {
+export function PlayerUI() {
   const [videoPlayed] = useVideoPlayed();
   const [audioPlayed] = useAudioPlayed();
+
+  const playerHandles = usePlayerHandles();
 
   return (
     <>
       <div
         className={styles.container}
         onClick={() => {
-          videoPlayed
-            ? playerHandlesRef.current.pause()
-            : playerHandlesRef.current.play();
+          videoPlayed ? playerHandles.pause() : playerHandles.play();
         }}
       >
         {videoPlayed === false && <PlayButton />}
       </div>
       {audioPlayed === false && videoPlayed === true && (
-        <SoundButton playerHandlesRef={playerHandlesRef} />
+        <SoundButton />
       )}
     </>
   );
