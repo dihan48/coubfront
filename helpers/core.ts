@@ -49,3 +49,14 @@ export function createObserver(callback: IntersectionObserverCallback) {
 export function getIsShowPlayer(c: number, i: number) {
   return c - 2 < i && c + 2 > i;
 }
+
+export type Item = {
+  permalink: string | null;
+  videoMed: { url: string; size: number } | null;
+  videoHigh: { url: string; size: number } | null;
+  videoHigher: { url: string; size: number } | null;
+  audioMed: { url: string; size: number } | null;
+  title: string | null;
+  picture: string | null;
+  blurDataURL: string | null;
+};

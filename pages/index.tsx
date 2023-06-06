@@ -1,7 +1,8 @@
+import type { Item } from "@/helpers/core";
 import Head from "next/head";
-import { getPlaiceholder } from "plaiceholder";
 import { Inter } from "next/font/google";
 import { VideoList } from "../components/videoList/videoList";
+import { fetchCoubs } from "@/helpers/fetchApi";
 
 import styles from "@/styles/Home.module.css";
 
@@ -26,50 +27,12 @@ export default function Home({ coubs }: { coubs: Array<Item> }) {
 }
 
 export const getStaticProps = async () => {
-  const coubs = await fetch(
+  const coubs = await fetchCoubs(
     "https://coub.com/api/v2/timeline/subscriptions/fresh?page=1"
-  )
-    .then((res) => res.json())
-    .then(
-      async (data) =>
-        await Promise.all(
-          data.coubs.map(async (item: any): Promise<Item> => {
-            const buffer = await fetch(item.picture)
-              .then((res) => res.arrayBuffer())
-              .then((arrayBuffer) => Buffer.from(arrayBuffer))
-              .catch(() => null);
-
-            const { base64 } = buffer
-              ? await getPlaiceholder(buffer)
-              : { base64: null };
-
-            return {
-              permalink: item?.permalink || null,
-              videoMed: item?.file_versions?.html5?.video?.med || null,
-              videoHigh: item?.file_versions?.html5?.video?.high || null,
-              videoHigher: item?.file_versions?.html5?.video?.higher || null,
-              audioMed: item?.file_versions?.html5?.audio?.med || null,
-              title: item?.title || null,
-              picture: item?.picture || null,
-              blurDataURL: base64 || null,
-            };
-          })
-        ).then((values) => values)
-    );
+  );
 
   return {
     props: { coubs },
     revalidate: 10,
   };
-};
-
-export type Item = {
-  permalink: string | null;
-  videoMed: { url: string; size: number } | null;
-  videoHigh: { url: string; size: number } | null;
-  videoHigher: { url: string; size: number } | null;
-  audioMed: { url: string; size: number } | null;
-  title: string | null;
-  picture: string | null;
-  blurDataURL: string | null;
 };

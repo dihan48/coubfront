@@ -1,4 +1,4 @@
-import type { Item } from "@/pages";
+import type { Item } from "@/helpers/core";
 import type { MutableRefObject, RefObject } from "react";
 import { memo, useEffect, useRef } from "react";
 import { PlayerLayer } from "./playerLayer";

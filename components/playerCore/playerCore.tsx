@@ -1,4 +1,4 @@
-import type { Item } from "@/pages";
+import type { Item } from "@/helpers/core";
 import type { Dispatch, ReactElement, RefObject, SetStateAction } from "react";
 import {
   createContext,
@@ -115,7 +115,6 @@ export function PlayerCore({ children }: { children: ReactElement }) {
 
         audio.src = audioMed?.url || "";
         video.src = getVideoSrc(data);
-        video.poster = picture || "";
 
         video.load();
         audio.load();

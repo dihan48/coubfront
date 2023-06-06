@@ -1,4 +1,4 @@
-import type { Item } from "@/pages";
+import type { Item } from "@/helpers/core";
 import Image from "next/image";
 import { useCallback, useEffect, useRef } from "react";
 import { useCurrentVideoIndex } from "../videoList/videoList";

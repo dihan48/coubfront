@@ -1,4 +1,4 @@
-import type { Item } from "@/pages";
+import type { Item } from "@/helpers/core";
 import {
   createContext,
   useCallback,
