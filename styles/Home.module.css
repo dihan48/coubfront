@@ -14,7 +14,8 @@
   width: 100%;
 }
 
-@media (orientation: portrait) {
+@media (orientation: portrait) and (max-width: 424.98px),
+(orientation: landscape) and (max-height: 424.98px) {
   .main {
     margin: 0;
   }
