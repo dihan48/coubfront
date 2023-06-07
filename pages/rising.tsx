@@ -5,7 +5,7 @@ import Layout from "@/components/layouts/main";
 import { VideoList } from "@/components/videoList/videoList";
 import { fetchCoubs } from "@/helpers/fetchApi";
 
-const section: SiteSection = "fresh";
+const section: SiteSection = "rising";
 const endpoint = `https://coub.com/api/v2/timeline/subscriptions/${section}?page=1`;
 
 const Page: NextPageWithLayout<IPageProps> = ({ coubs }) => {

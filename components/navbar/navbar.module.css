@@ -1,0 +1,27 @@
+.container {
+  width: 100%;
+  position: sticky;
+  top: 0;
+  left: 0;
+  display: flex;
+  z-index: 10;
+  backdrop-filter: blur(30px);
+}
+
+.nav {
+  padding: 15px;
+  height: 100%;
+  margin: 0 auto;
+}
+
+.link {
+  padding: 15px;
+}
+
+.link:hover {
+  filter: drop-shadow(0 0 0.75rem crimson);
+}
+
+.link_active {
+  filter: drop-shadow(0 0 0.75rem crimson);
+}

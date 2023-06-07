@@ -1,7 +1,6 @@
 .container {
   height: 100vh;
   width: 100%;
-  display: flex;
   overflow-y: auto;
   scroll-snap-type: y mandatory;
   scroll-behavior: smooth;
@@ -9,9 +8,8 @@
 
 .main {
   margin: 9rem 0;
-  display: flex;
-  flex-direction: column;
   width: 100%;
+  height: 720px;
 }
 
 @media (orientation: portrait) and (max-width: 424.98px),

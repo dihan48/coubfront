@@ -8,7 +8,7 @@ export default async function handler(
   res: NextApiResponse<Data>
 ) {
   const coubs = await fetchCoubs(
-    `https://coub.com/api/v2/timeline/subscriptions/fresh?page=${req.query?.page}`
+    `https://coub.com/api/v2/timeline/subscriptions/${req.query?.section}?page=${req.query?.page}`
   );
 
   res.status(200).json({ coubs });

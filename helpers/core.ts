@@ -60,3 +60,5 @@ export type Item = {
   picture: string | null;
   blurDataURL: string | null;
 };
+
+export type SiteSection = "daily" | "rising" | "fresh";

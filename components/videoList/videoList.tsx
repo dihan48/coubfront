@@ -1,4 +1,4 @@
-import type { Item } from "@/helpers/core";
+import type { Item, SiteSection } from "@/helpers/core";
 import {
   createContext,
   useCallback,
@@ -24,7 +24,7 @@ export function useCurrentVideoIndex() {
   return context;
 }
 
-export function VideoList({ list }: IProps) {
+export function VideoList({ list, section }: IProps) {
   const [page, setPage] = useState(1);
   const [currentVideoIndex, setCurrentVideoIndex] = useState(0);
   const [totalList, setTotalList] = useState(list);
@@ -57,9 +57,9 @@ export function VideoList({ list }: IProps) {
 
       try {
         (async () => {
-          const { coubs } = await fetch(`/api/hello?page=${page + 1}`).then(
-            (res) => res.json()
-          );
+          const { coubs } = await fetch(
+            `/api/coubs?section=${section}&page=${page + 1}`
+          ).then((res) => res.json());
           setTotalList((prev) => {
             const c: Item[] = [];
             new Map(
@@ -74,7 +74,7 @@ export function VideoList({ list }: IProps) {
         setLoading(false);
       }
     }
-  }, [totalList.length, currentVideoIndex, loading, page]);
+  }, [totalList.length, currentVideoIndex, loading, page, section]);
 
   if (totalList == null) return null;
 
@@ -101,4 +101,5 @@ export function VideoList({ list }: IProps) {
 
 interface IProps {
   list: Item[];
+  section: SiteSection;
 }
