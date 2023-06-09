@@ -113,7 +113,7 @@ export function PlayerCore({ children }: { children: ReactElement }) {
 
         const { audioMed, picture } = data;
 
-        audio.src = audioMed?.url || "";
+        audio.src = audioMed || "";
         video.src = getVideoSrc(data);
 
         video.load();
@@ -147,6 +147,13 @@ export function PlayerCore({ children }: { children: ReactElement }) {
     if (audioRef.current) document.body.append(audioRef.current);
   }, []);
 
+  useEffect(() => {
+    return () => {
+      audio?.remove();
+      video?.remove();
+    };
+  }, [audio, video]);
+
   const playerHandles = useMemo(
     () => ({ tryPlay, stop, soundOn, setupPlayer }),
     [tryPlay, stop, soundOn, setupPlayer]
@@ -175,13 +182,13 @@ export function getVideoSrc(data: Item) {
 
   const winWidth = typeof window === "object" ? window.innerWidth : 0;
 
-  let videoSrc = videoMed?.url || "";
+  let videoSrc = videoMed || "";
   if (winWidth >= 1200 && winWidth < 1560) {
-    videoSrc = videoHigh?.url || videoMed?.url || "";
+    videoSrc = videoHigh || videoMed || "";
   }
 
   if (winWidth >= 1560) {
-    videoSrc = videoHigher?.url || videoMed?.url || "";
+    videoSrc = videoHigher || videoMed || "";
   }
 
   return videoSrc;

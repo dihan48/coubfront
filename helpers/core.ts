@@ -52,13 +52,13 @@ export function getIsShowPlayer(c: number, i: number) {
 
 export type Item = {
   permalink: string | null;
-  videoMed: { url: string; size: number } | null;
-  videoHigh: { url: string; size: number } | null;
-  videoHigher: { url: string; size: number } | null;
-  audioMed: { url: string; size: number } | null;
+  videoMed: string | null;
+  videoHigh: string | null;
+  videoHigher: string | null;
+  audioMed: string | null;
   title: string | null;
   picture: string | null;
   blurDataURL: string | null;
 };
 
-export type SiteSection = "daily" | "rising" | "fresh";
+export type SiteSection = "daily" | "rising" | "fresh" | "self";

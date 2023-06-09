@@ -70,7 +70,7 @@ export function Player({ data, index }: IProps) {
         blurDataURL={data.blurDataURL || undefined}
       />
       <video hidden src={getVideoSrc(data)} />
-      <audio hidden src={audioMed?.url || ""} />
+      <audio hidden src={audioMed || ""} />
       <div ref={playerRef} className={styles.player} />
     </div>
   );

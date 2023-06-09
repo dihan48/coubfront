@@ -1,7 +1,7 @@
 import type { Item } from "@/helpers/core";
 import { getPlaiceholder } from "plaiceholder";
 
-export async function fetchCoubs(endpoint: string) {
+export async function fetchCoubs(endpoint: string): Promise<Item[]> {
   const coubs = await fetch(endpoint)
     .then((res) => res.json())
     .then(
@@ -23,10 +23,11 @@ export async function fetchCoubs(endpoint: string) {
 
             return {
               permalink: item?.permalink || null,
-              videoMed: item?.file_versions?.html5?.video?.med || null,
-              videoHigh: item?.file_versions?.html5?.video?.high || null,
-              videoHigher: item?.file_versions?.html5?.video?.higher || null,
-              audioMed: item?.file_versions?.html5?.audio?.med || null,
+              videoMed: item?.file_versions?.html5?.video?.med?.url || null,
+              videoHigh: item?.file_versions?.html5?.video?.high?.url || null,
+              videoHigher:
+                item?.file_versions?.html5?.video?.higher?.url || null,
+              audioMed: item?.file_versions?.html5?.audio?.med?.url || null,
               title: item?.title || null,
               picture: item?.picture || null,
               blurDataURL: base64 || null,

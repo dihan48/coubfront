@@ -16,5 +16,6 @@
 (orientation: landscape) and (max-height: 424.98px) {
   .main {
     margin: 0;
+    height: 100vh;
   }
 }

@@ -57,18 +57,29 @@ export function VideoList({ list, section }: IProps) {
 
       try {
         (async () => {
-          const { coubs } = await fetch(
-            `/api/coubs?section=${section}&page=${page + 1}`
-          ).then((res) => res.json());
-          setTotalList((prev) => {
-            const c: Item[] = [];
-            new Map(
-              [...prev, ...coubs].map((item) => [item.permalink, item])
-            ).forEach((x) => c.push(x));
-            return c;
-          });
-          setPage((p) => ++p);
-          setLoading(false);
+          if (section !== "self") {
+            const { coubs } = await fetch(
+              `/api/coubs?section=${section}&page=${page + 1}`
+            ).then((res) => res.json());
+            setTotalList((prev) => {
+              const c: Item[] = [];
+              new Map(
+                [...prev, ...coubs].map((item) => [item.permalink, item])
+              ).forEach((x) => c.push(x));
+              return c;
+            });
+            setPage((p) => ++p);
+            setLoading(false);
+          } else {
+            const { reclips } = await fetch(
+              `/api/getReclips?page=${page + 1}`
+            ).then((res) => res.json());
+            if (reclips.length !== 0) {
+              setTotalList((prev) => [...prev, ...reclips]);
+              setPage((p) => ++p);
+              setLoading(false);
+            }
+          }
         })();
       } catch (error) {
         setLoading(false);

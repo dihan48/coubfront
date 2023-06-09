@@ -12,10 +12,13 @@
   padding: 15px;
   height: 100%;
   margin: 0 auto;
+  max-width: 100vw;
+  overflow: auto;
 }
 
 .link {
   padding: 15px;
+  white-space: nowrap;
 }
 
 .link:hover {
