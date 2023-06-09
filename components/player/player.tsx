@@ -68,6 +68,7 @@ export function Player({ data, index }: IProps) {
         height={960}
         placeholder={data.blurDataURL ? "blur" : "empty"}
         blurDataURL={data.blurDataURL || undefined}
+        unoptimized={true}
       />
       <video hidden src={getVideoSrc(data)} />
       <audio hidden src={audioMed || ""} />
