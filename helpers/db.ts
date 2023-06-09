@@ -1,3 +1,4 @@
+import * as pg from "pg";
 import {
   CreationOptional,
   INTEGER,
@@ -13,6 +14,7 @@ const dbUrl = process.env.DATABASE_URL || "";
 
 const sequelize = new Sequelize(dbUrl, {
   logging: false,
+  dialectModule: pg,
 });
 
 const Reclip = sequelize.define<IReclipModel>("reclip", {
