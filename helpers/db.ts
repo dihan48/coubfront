@@ -111,6 +111,7 @@ export async function getReclipsDB(
     include: [Video, Audio, Picture],
     limit,
     offset,
+    order: [["id", "DESC"]],
   });
   if (reclips) {
     return reclips.map((reclip) => reclip.toJSON<IReclip>());
