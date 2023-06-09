@@ -175,7 +175,7 @@ export async function createReclip(reclip: ICreateReclip) {
     reclipDB.pictureId = pictureObj.id;
   }
 
-  await Reclip.create(reclipDB);
+  return await Reclip.create(reclipDB);
 }
 
 export interface ICreateReclip {

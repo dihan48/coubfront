@@ -10,60 +10,70 @@ export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse<Data>
 ) {
-  const data = "DAta";
+  res.setHeader("Content-Type", "text/html; charset=utf-8");
+  res.setHeader("Transfer-Encoding", "chunked");
 
-  const endpoint = `https://coub.com/api/v2/timeline/subscriptions/${
-    req.query?.section || "fresh"
-  }?page=${req.query?.page || "1"}`;
-  const coubs = await fetchCoubs(endpoint);
+  if (req.query?.page && req.query?.pageEnd) {
+    const { page, pageEnd } = req.query;
 
-  for (const coub of coubs) {
-    const { permalink, title } = coub;
+    for (let i = +page; i < +pageEnd; i++) {
+      const endpoint = `https://coub.com/api/v2/timeline/subscriptions/${
+        req.query?.section || "fresh"
+      }?page=${i || "1"}`;
+      const coubs = await fetchCoubs(endpoint);
 
-    if (!permalink) {
-      continue;
-    }
-    if (await hasPermalink(permalink)) {
-      console.log("permalink exist ", permalink);
-      continue;
-    }
+      for (const coub of coubs) {
+        const { permalink, title } = coub;
 
-    let audioMed = null,
-      videoMed = null,
-      videoHigh = null,
-      videoHigher = null,
-      picture = null;
+        if (!permalink) {
+          continue;
+        }
+        if (await hasPermalink(permalink)) {
+          console.log("permalink exist ", permalink);
+          continue;
+        }
 
-    if (coub.audioMed) {
-      audioMed = await fetchFile(coub.audioMed);
-    }
-    if (coub.videoMed) {
-      videoMed = await fetchFile(coub.videoMed);
-    }
-    if (coub.videoHigh) {
-      videoHigh = await fetchFile(coub.videoHigh);
-    }
-    if (coub.videoHigher) {
-      videoHigher = await fetchFile(coub.videoHigher);
-    }
-    if (coub.picture) {
-      picture = await fetchFile(coub.picture);
-    }
+        let audioMed = null,
+          videoMed = null,
+          videoHigh = null,
+          videoHigher = null,
+          picture = null;
 
-    const reclip: ICreateReclip = {
-      permalink,
-      title,
-      audioMed,
-      videoMed,
-      videoHigh,
-      videoHigher,
-      picture,
-    };
+        if (coub.audioMed) {
+          audioMed = await fetchFile(coub.audioMed);
+        }
+        if (coub.videoMed) {
+          videoMed = await fetchFile(coub.videoMed);
+        }
+        if (coub.videoHigh) {
+          videoHigh = await fetchFile(coub.videoHigh);
+        }
+        if (coub.videoHigher) {
+          videoHigher = await fetchFile(coub.videoHigher);
+        }
+        if (coub.picture) {
+          picture = await fetchFile(coub.picture);
+        }
 
-    await createReclip(reclip);
+        const reclip: ICreateReclip = {
+          permalink,
+          title,
+          audioMed,
+          videoMed,
+          videoHigh,
+          videoHigher,
+          picture,
+        };
+
+        const r = await createReclip(reclip);
+        const d = r?.permalink || "";
+
+        res.write(d + "<br />");
+      }
+    }
   }
 
-  res.status(200).json({ data });
+  res.end();
 }
 
 async function fetchFile(url: string) {
@@ -123,7 +133,7 @@ function blobToFile(theBlob: Blob, fileName: string): File {
 }
 
 type Data = {
-  data: string;
+  data: string[];
 };
 
 type DiscordError = {
