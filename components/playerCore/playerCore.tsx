@@ -61,10 +61,12 @@ export function PlayerCore({ children }: { children: ReactElement }) {
         }
 
         if (audioPlay === false && videoPlay === true) {
-          setAudioPlayed(false);
           setVideoPlayed(true);
 
-          audio.muted = true;
+          if (audio.readyState !== 0) {
+            setAudioPlayed(false);
+            audio.muted = true;
+          }
         }
 
         if (audioPlay === true && videoPlay === true) {
