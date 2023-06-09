@@ -77,7 +77,7 @@ async function fetchFile(url: string) {
     );
 }
 
-export async function loadDiscord(file: File) {
+export async function loadDiscord(file: File): Promise<string | null> {
   const url = `https://discord.com/api/v10/channels/${channelId}/messages`;
 
   let formData = new FormData();
@@ -101,7 +101,7 @@ export async function loadDiscord(file: File) {
     await new Promise<void>((r) => {
       setTimeout(() => r(), error.retry_after * 1000 + 1000);
     });
-    return loadDiscord(file);
+    return await loadDiscord(file);
   }
 
   const attachment = results?.attachments?.[0];

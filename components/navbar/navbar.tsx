@@ -31,7 +31,7 @@ function NavLink({ href, label, scrollRef }: NavLinkProps) {
         router.pathname === href ? styles.link_active : null,
       ].join(" ")}
       onClick={() => {
-        scrollRef.current?.scroll({ top: 0, left: 0, behavior: "instant" });
+        scrollRef.current?.scroll({ top: 0, left: 0, behavior: "auto" });
       }}
     >
       {label}

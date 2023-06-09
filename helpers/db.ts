@@ -1,4 +1,13 @@
-import { INTEGER, Optional, STRING, Sequelize } from "sequelize-cockroachdb";
+import {
+  CreationOptional,
+  INTEGER,
+  Model,
+  Optional,
+  STRING,
+  Sequelize,
+  InferAttributes,
+  InferCreationAttributes,
+} from "sequelize-cockroachdb";
 
 const dbUrl = process.env.DATABASE_URL || "";
 
@@ -6,7 +15,7 @@ const sequelize = new Sequelize(dbUrl, {
   logging: false,
 });
 
-const Reclip = sequelize.define("reclip", {
+const Reclip = sequelize.define<IReclipModel>("reclip", {
   id: {
     type: INTEGER,
     autoIncrement: true,
@@ -23,7 +32,7 @@ const Reclip = sequelize.define("reclip", {
   },
 });
 
-const Picture = sequelize.define("picture", {
+const Picture = sequelize.define<IPictureModel>("picture", {
   id: {
     type: INTEGER,
     autoIncrement: true,
@@ -36,7 +45,7 @@ const Picture = sequelize.define("picture", {
   },
 });
 
-const Video = sequelize.define("video", {
+const Video = sequelize.define<IVideoModel>("video", {
   id: {
     type: INTEGER,
     autoIncrement: true,
@@ -57,7 +66,7 @@ const Video = sequelize.define("video", {
   },
 });
 
-const Audio = sequelize.define("audio", {
+const Audio = sequelize.define<IAudioModel>("audio", {
   id: {
     type: INTEGER,
     autoIncrement: true,
@@ -97,13 +106,12 @@ export async function getReclipsDB(
 ): Promise<IReclip[] | null> {
   // await syncDB();
   const reclips = await Reclip.findAll({
-    include: { all: true },
+    include: [Video, Audio, Picture],
     limit,
     offset,
   });
-
   if (reclips) {
-    return reclips.map((reclip) => reclip.toJSON());
+    return reclips.map((reclip) => reclip.toJSON<IReclip>());
   } else {
     return null;
   }
@@ -139,7 +147,11 @@ export async function createReclip(reclip: ICreateReclip) {
   const audioObj = audioMed ? await Audio.create({ audioMed }) : null;
   const videoObj =
     videoMed || videoHigh || videoHigher
-      ? await Video.create({ videoMed, videoHigh, videoHigher })
+      ? await Video.create({
+          videoMed,
+          videoHigh,
+          videoHigher,
+        })
       : null;
   const pictureObj = picture ? await Picture.create({ picture }) : null;
 
@@ -182,8 +194,8 @@ interface IReclipDB extends Optional<any, string> {
   pictureId: number | null;
 }
 
-interface IReclip {
-  id: string;
+interface IReclip extends Model<any, any> {
+  id: number;
   permalink: string;
   title: string;
   videoId: string | null;
@@ -203,4 +215,43 @@ interface IReclip {
     id: string;
     picture: string;
   };
+}
+
+interface IVideoModel
+  extends Model<
+    InferAttributes<IVideoModel>,
+    InferCreationAttributes<IVideoModel>
+  > {
+  id: CreationOptional<number>;
+  videoMed: string | null;
+  videoHigh: string | null;
+  videoHigher: string | null;
+}
+
+interface IAudioModel
+  extends Model<
+    InferAttributes<IAudioModel>,
+    InferCreationAttributes<IAudioModel>
+  > {
+  id: CreationOptional<number>;
+  audioMed: string | null;
+}
+
+interface IPictureModel
+  extends Model<
+    InferAttributes<IPictureModel>,
+    InferCreationAttributes<IPictureModel>
+  > {
+  id: CreationOptional<number>;
+  picture: string | null;
+}
+
+interface IReclipModel
+  extends Model<
+    InferAttributes<IReclipModel>,
+    InferCreationAttributes<IReclipModel>
+  > {
+  id: CreationOptional<number>;
+  title: string | null;
+  permalink: string | null;
 }
