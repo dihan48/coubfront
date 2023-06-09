@@ -16,8 +16,12 @@ Page.getLayout = function getLayout(page: ReactElement) {
 };
 
 export const getStaticProps = async () => {
-  const reclips = await fetchReclip(1);
-
+  let reclips: Item[] = [];
+  try {
+    reclips = await fetchReclip(1);
+  } catch (error) {
+    console.log(error);
+  }
   return {
     props: { reclips },
     revalidate: 10,

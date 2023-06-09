@@ -17,8 +17,12 @@ Page.getLayout = function getLayout(page: ReactElement) {
 };
 
 export const getStaticProps = async () => {
-  const coubs = await fetchCoubs(endpoint);
-
+  let coubs: Item[] = [];
+  try {
+    coubs = await fetchCoubs(endpoint);
+  } catch (error) {
+    console.log(error);
+  }
   return {
     props: { coubs },
     revalidate: 10,
@@ -26,7 +30,7 @@ export const getStaticProps = async () => {
 };
 
 interface IPageProps {
-  coubs: Array<Item>;
+  coubs: Item[];
 }
 
 export default Page;
