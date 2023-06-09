@@ -1,7 +1,9 @@
-export function createAudio() {
-  if (typeof document !== "object") return null;
+const audio =
+  typeof document === "object" ? document.createElement("audio") : null;
 
-  const audio = document.createElement("audio");
+export function createAudio() {
+  if (audio === null) return null;
+
   audio.src = "";
   audio.controls = false;
   audio.hidden = true;
@@ -15,10 +17,12 @@ export function createAudio() {
   return audio;
 }
 
-export function createVideo() {
-  if (typeof document !== "object") return null;
+const video =
+  typeof document === "object" ? document.createElement("video") : null;
 
-  const video = document.createElement("video");
+export function createVideo() {
+  if (video === null) return null;
+
   video.src = "";
   video.controls = false;
   video.preload = "auto";
