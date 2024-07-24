@@ -1,130 +1,242 @@
 import { getPlaiceholder } from "plaiceholder";
 import type { Item } from "@/helpers/core";
-import { getReclipsDB } from "./db";
+import { getReclipsDB, IReclip, Reclip } from "./db";
 
 const limit = 10;
 const token = process.env.DISCORD_TOKEN || "";
 
 export async function fetchReclip(page: number): Promise<Item[]> {
+  console.log({ page });
+  console.time("getReclipsDB");
   const resDB = await getReclipsDB(
     page > 0 ? (page - 1) * limit : limit,
     limit
   );
+  console.timeEnd("getReclipsDB");
+  const packetLinks = new ContainerPacketLinks();
+  const mapPreResult = new Map<number, Item>();
+  const result: Item[] = [];
 
   if (Array.isArray(resDB)) {
-    const reclip = await Promise.all(
-      resDB.map(async (reclip): Promise<Item> => {
-        let base64 = null;
-        let newVideoMedUrl = null;
-        let newVideoHighUrl = null;
-        let newVideoHigherUrl = null;
-        let newAudioUrl = null;
-        let newPictureUrl = null;
+    for (let i = 0; i < resDB.length; i++) {
+      const {
+        id,
+        permalink,
+        title,
+        videoMedLink,
+        videoHighLink,
+        videoHigherLink,
+        audioLink,
+        pictureLink,
+      } = resDB[i];
 
-        const pictureUrl = reclip.picture?.picture;
-        const videoMedUrl = reclip.video?.videoMed;
-        const videoHighUrl = reclip.video?.videoHigh;
-        const videoHigherUrl = reclip.video?.videoHigher;
-        const audioUrl = reclip.audio?.audioMed;
+      const picture = tryGetActualLink(
+        packetLinks,
+        id,
+        "pictureLink",
+        pictureLink
+      );
+      const audioMed = tryGetActualLink(
+        packetLinks,
+        id,
+        "audioLink",
+        audioLink
+      );
+      const videoMed = tryGetActualLink(
+        packetLinks,
+        id,
+        "videoMedLink",
+        videoMedLink
+      );
+      const videoHigh = tryGetActualLink(
+        packetLinks,
+        id,
+        "videoHighLink",
+        videoHighLink
+      );
+      const videoHigher = tryGetActualLink(
+        packetLinks,
+        id,
+        "videoHigherLink",
+        videoHigherLink
+      );
 
-        const attachment_urls = [
-          pictureUrl,
-          videoMedUrl,
-          videoHighUrl,
-          videoHigherUrl,
-          audioUrl,
-        ];
+      mapPreResult.set(id, {
+        permalink,
+        title,
+        picture,
+        audioMed,
+        videoMed,
+        videoHigh,
+        videoHigher,
+        blurDataURL: null,
+      });
+    }
 
-        if (reclip.picture?.picture) {
-          const response = await fetch(
-            `https://discord.com/api/v9/attachments/refresh-urls`,
-            {
-              method: "POST",
-              headers: {
-                Authorization: `Bot ${token}`,
-                "Content-Type": "application/json",
-              },
-              body: JSON.stringify({
-                attachment_urls,
-              }),
+    await Promise.all(
+      packetLinks.packets.map(async (packet) => {
+        return await updatePacketLinks(packet).then((links) => {
+          links.forEach(({ link, reclipId, dbProp }) => {
+            const reclip = mapPreResult.get(reclipId);
+            if (reclip) {
+              reclip[dbPropToItemProp(dbProp)] = link.link;
             }
-          );
-
-          const data: {
-            refreshed_urls: {
-              refreshed: string;
-              original: string;
-            }[];
-          } = await response.json();
-
-          if (pictureUrl && pictureUrl.length > 0) {
-            newPictureUrl =
-              (reclip.picture?.picture &&
-                data.refreshed_urls.find((x) => x.original === pictureUrl)
-                  ?.refreshed) ||
-              null;
-
-            if (newPictureUrl && newPictureUrl.length > 0) {
-              const b = await fetch(newPictureUrl)
-                .then((res) => res.arrayBuffer())
-                .then((arrayBuffer) => Buffer.from(arrayBuffer))
-                .catch(() => null);
-
-              const ph = b ? await getPlaiceholder(b) : null;
-              if (ph?.base64) {
-                base64 = ph.base64;
-              }
-            }
-          }
-
-          if (videoMedUrl && videoMedUrl.length > 0) {
-            newVideoMedUrl =
-              (reclip.video?.videoMed &&
-                data.refreshed_urls.find((x) => x.original === videoMedUrl)
-                  ?.refreshed) ||
-              null;
-          }
-
-          if (videoHighUrl && videoHighUrl.length > 0) {
-            newVideoHighUrl =
-              (reclip.video?.videoHigh &&
-                data.refreshed_urls.find((x) => x.original === videoHighUrl)
-                  ?.refreshed) ||
-              null;
-          }
-
-          if (videoHigherUrl && videoHigherUrl.length > 0) {
-            newVideoHigherUrl =
-              (reclip.video?.videoHigher &&
-                data.refreshed_urls.find((x) => x.original === videoHigherUrl)
-                  ?.refreshed) ||
-              null;
-          }
-
-          if (audioUrl && audioUrl.length > 0) {
-            newAudioUrl =
-              (reclip.audio?.audioMed &&
-                data.refreshed_urls.find((x) => x.original === audioUrl)
-                  ?.refreshed) ||
-              null;
-          }
-        }
-
-        return {
-          permalink: reclip.permalink,
-          videoMed: newVideoMedUrl,
-          videoHigh: newVideoHighUrl,
-          videoHigher: newVideoHigherUrl,
-          audioMed: newAudioUrl,
-          title: reclip.title,
-          picture: newPictureUrl,
-          blurDataURL: base64,
-        };
+            const json = JSON.stringify(link);
+            Reclip.update({ [dbProp]: json }, { where: { id: reclipId } });
+          });
+        });
       })
-    ).then((values) => values);
-
-    return reclip;
+    );
   }
 
-  return [];
+  mapPreResult.forEach((reclip) => {
+    result.push(reclip);
+  });
+
+  return result;
+}
+
+interface DiscordLink {
+  link: string;
+  ex?: string;
+  is?: string;
+  hm?: string;
+}
+
+async function updatePacketLinks(
+  packetLinks: { link: DiscordLink; reclipId: number; dbProp: keyof IReclip }[]
+): Promise<{ link: DiscordLink; reclipId: number; dbProp: keyof IReclip }[]> {
+  const attachment_urls = packetLinks.map((x) => x.link.link);
+  if (packetLinks.length === 0) {
+    return [];
+  }
+  const linkMap = new Map<
+    string,
+    { link: DiscordLink; reclipId: number; dbProp: keyof IReclip }
+  >();
+  packetLinks.forEach((x) => linkMap.set(x.link.link, x));
+
+  console.time("discord api");
+  const response = await fetch(
+    `https://discord.com/api/v9/attachments/refresh-urls`,
+    {
+      method: "POST",
+      headers: {
+        Authorization: `Bot ${token}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        attachment_urls,
+      }),
+    }
+  );
+
+  const data: {
+    refreshed_urls: {
+      refreshed: string;
+      original: string;
+    }[];
+  } = await response.json();
+
+  data.refreshed_urls?.forEach((x) => {
+    let newDiscordLink: DiscordLink | null = null;
+    const fullLink = x.refreshed;
+
+    if (typeof fullLink === "string") {
+      newDiscordLink = { link: fullLink };
+      const url = new URL(fullLink);
+      newDiscordLink.ex = url.searchParams.get("ex") || undefined;
+      newDiscordLink.is = url.searchParams.get("is") || undefined;
+      newDiscordLink.hm = url.searchParams.get("hm") || undefined;
+    }
+
+    const discordLink = linkMap.get(x.original);
+    if (discordLink && newDiscordLink) {
+      discordLink.link = newDiscordLink;
+    }
+  });
+
+  packetLinks.forEach((x) => {
+    if (x.link.ex) {
+      if (parseInt(x.link.ex, 16) * 1000 + 60 * 1000 < new Date().getTime()) {
+        console.warn("link NOT updated", x.link.link);
+      }
+    } else {
+      console.warn("link NOT updated", x.link.link);
+    }
+  });
+
+  console.timeEnd("discord api");
+  return packetLinks;
+}
+
+function tryGetActualLink(
+  packetLinks: ContainerPacketLinks,
+  reclipId: number,
+  dbProp: keyof IReclip,
+  json: string | null
+): string | null {
+  if (!json) {
+    return null;
+  }
+
+  const link: DiscordLink | null = getJson(json);
+  if (link) {
+    if (
+      !link?.ex ||
+      parseInt(link.ex, 16) * 1000 + 60 * 1000 < new Date().getTime()
+    ) {
+      packetLinks.add(link, reclipId, dbProp);
+      return null;
+    } else {
+      return link.link;
+    }
+  }
+
+  return null;
+}
+
+function getJson(str: string | null) {
+  if (!str) {
+    return null;
+  }
+  try {
+    return JSON.parse(str);
+  } catch (error) {
+    return null;
+  }
+}
+
+class ContainerPacketLinks {
+  lastPacket: { link: DiscordLink; reclipId: number; dbProp: keyof IReclip }[] =
+    [];
+  packets: { link: DiscordLink; reclipId: number; dbProp: keyof IReclip }[][] =
+    [this.lastPacket];
+
+  add = (link: DiscordLink, reclipId: number, dbProp: keyof IReclip) => {
+    if (this.lastPacket.length < 50) {
+      this.lastPacket.push({ link, reclipId, dbProp });
+    } else {
+      this.lastPacket = [];
+      this.packets.push(this.lastPacket);
+      this.lastPacket.push({ link, reclipId, dbProp });
+    }
+  };
+}
+
+function dbPropToItemProp(dbProp: string): keyof Item {
+  switch (dbProp) {
+    case "pictureLink":
+      return "picture";
+    case "audioLink":
+      return "audioMed";
+    case "videoMedLink":
+      return "videoMed";
+    case "videoHighLink":
+      return "videoHigh";
+    case "videoHigherLink":
+      return "videoHigher";
+    default:
+      return dbProp as keyof Item;
+  }
 }

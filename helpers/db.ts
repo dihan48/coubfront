@@ -8,7 +8,10 @@ import {
   Sequelize,
   InferAttributes,
   InferCreationAttributes,
+  JSONB,
+  DataTypes,
 } from "sequelize-cockroachdb";
+import { Json } from "sequelize/types/utils";
 
 const dbUrl = process.env.DATABASE_URL || "";
 
@@ -17,7 +20,7 @@ const sequelize = new Sequelize(dbUrl, {
   dialectModule: pg,
 });
 
-const Reclip = sequelize.define<IReclipModel>("reclip", {
+export const Reclip = sequelize.define<IReclipModel>("reclip", {
   id: {
     type: INTEGER,
     autoIncrement: true,
@@ -30,6 +33,30 @@ const Reclip = sequelize.define<IReclipModel>("reclip", {
   },
   title: {
     type: STRING,
+    allowNull: false,
+  },
+  videoMedLink: {
+    type: JSONB,
+    allowNull: true,
+  },
+  videoHighLink: {
+    type: JSONB,
+    allowNull: true,
+  },
+  videoHigherLink: {
+    type: JSONB,
+    allowNull: true,
+  },
+  audioLink: {
+    type: JSONB,
+    allowNull: true,
+  },
+  pictureLink: {
+    type: JSONB,
+    allowNull: true,
+  },
+  createdAt: {
+    type: DataTypes.DATE,
     allowNull: false,
   },
 });
@@ -164,6 +191,7 @@ export async function createReclip(reclip: ICreateReclip) {
     videoId: null,
     audioId: null,
     pictureId: null,
+    createdAt: new Date(),
   };
 
   if (videoObj?.id) {
@@ -187,17 +215,19 @@ export interface ICreateReclip {
   audioMed: string | null;
   title: string | null;
   picture: string | null;
+  createdAt: Date;
 }
 
-interface IReclipDB extends Optional<any, string> {
+ interface IReclipDB extends Optional<any, string> {
   permalink: string | null;
   title: string | null;
   videoId: number | null;
   audioId: number | null;
   pictureId: number | null;
+  createdAt: Date;
 }
 
-interface IReclip extends Model<any, any> {
+export interface IReclip extends Model<any, any> {
   id: number;
   permalink: string;
   title: string;
@@ -218,6 +248,12 @@ interface IReclip extends Model<any, any> {
     id: string;
     picture: string;
   };
+  videoMedLink: string | null;
+  videoHighLink: string | null;
+  videoHigherLink: string | null;
+  audioLink: string | null;
+  pictureLink: string | null;
+  createdAt: Date;
 }
 
 interface IVideoModel
@@ -257,4 +293,10 @@ interface IReclipModel
   id: CreationOptional<number>;
   title: string | null;
   permalink: string | null;
+  videoMedLink: string | null;
+  videoHighLink: string | null;
+  videoHigherLink: string | null;
+  audioLink: string | null;
+  pictureLink: string | null;
+  createdAt: Date;
 }

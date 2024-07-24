@@ -13,7 +13,7 @@ export default function Layout({ children }: LayoutProps) {
   return (
     <>
       <Head>
-        <title>TrueCoub</title>
+        <title>CYCLIP</title>
         <meta
           name="description"
           content="Простой фронтенд для сайта коротких видео coub.com"
