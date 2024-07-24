@@ -215,7 +215,7 @@ export interface ICreateReclip {
   audioMed: string | null;
   title: string | null;
   picture: string | null;
-  createdAt: Date;
+  createdAt?: Date;
 }
 
  interface IReclipDB extends Optional<any, string> {
