@@ -17,6 +17,10 @@ export function Navbar({
         <NavLink href="/rising" label="В тренде" scrollRef={scrollRef} />
         <NavLink href="/fresh" label="Свежее" scrollRef={scrollRef} />
       </nav>
+
+      <Link href="/login" className={styles.reclips}>
+        <button>Войти</button>
+      </Link>
     </div>
   );
 }

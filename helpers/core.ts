@@ -55,12 +55,12 @@ export function getIsShowPlayer(c: number, i: number) {
 }
 
 export type Item = {
-  permalink: string | null;
+  permalink: string;
+  title: string;
   videoMed: string | null;
   videoHigh: string | null;
   videoHigher: string | null;
   audioMed: string | null;
-  title: string | null;
   picture: string | null;
   blurDataURL: string | null;
 };

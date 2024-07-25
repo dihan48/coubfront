@@ -1,7 +1,7 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 import { fileTypeFromBlob } from "file-type";
 import { fetchCoubs } from "@/helpers/fetchApi";
-import { ICreateReclip, createReclip, hasPermalink } from "@/helpers/db";
+import { createReclip, hasPermalink } from "@/helpers/db";
 
 const token = process.env.DISCORD_TOKEN || "";
 const channelId = process.env.DISCORD_CHANNEL || "";
@@ -33,36 +33,46 @@ export default async function handler(
           continue;
         }
 
-        let audioMed = null,
-          videoMed = null,
-          videoHigh = null,
-          videoHigher = null,
-          picture = null;
+        let audioLink = null,
+          videoMedLink = null,
+          videoHighLink = null,
+          videoHigherLink = null,
+          pictureLink = null;
 
         if (coub.audioMed) {
-          audioMed = await fetchFile(coub.audioMed);
+          audioLink = await fetchFile(coub.audioMed).then((link) =>
+            JSON.stringify({ link })
+          );
         }
         if (coub.videoMed) {
-          videoMed = await fetchFile(coub.videoMed);
+          videoMedLink = await fetchFile(coub.videoMed).then((link) =>
+            JSON.stringify({ link })
+          );
         }
         if (coub.videoHigh) {
-          videoHigh = await fetchFile(coub.videoHigh);
+          videoHighLink = await fetchFile(coub.videoHigh).then((link) =>
+            JSON.stringify({ link })
+          );
         }
         if (coub.videoHigher) {
-          videoHigher = await fetchFile(coub.videoHigher);
+          videoHigherLink = await fetchFile(coub.videoHigher).then((link) =>
+            JSON.stringify({ link })
+          );
         }
         if (coub.picture) {
-          picture = await fetchFile(coub.picture);
+          pictureLink = await fetchFile(coub.picture).then((link) =>
+            JSON.stringify({ link })
+          );
         }
 
-        const reclip: ICreateReclip = {
+        const reclip = {
           permalink,
           title,
-          audioMed,
-          videoMed,
-          videoHigh,
-          videoHigher,
-          picture,
+          audioLink,
+          videoMedLink,
+          videoHighLink,
+          videoHigherLink,
+          pictureLink,
         };
 
         const r = await createReclip(reclip);

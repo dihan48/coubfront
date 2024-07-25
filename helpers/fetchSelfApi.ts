@@ -1,6 +1,6 @@
 import { getPlaiceholder } from "plaiceholder";
 import type { Item } from "@/helpers/core";
-import { getReclipsDB, IReclip, Reclip } from "./db";
+import { getReclipsDB, IAttributesReclipModel, Reclip } from "./db";
 
 const limit = 10;
 const token = process.env.DISCORD_TOKEN || "";
@@ -104,15 +104,15 @@ interface DiscordLink {
 }
 
 async function updatePacketLinks(
-  packetLinks: { link: DiscordLink; reclipId: number; dbProp: keyof IReclip }[]
-): Promise<{ link: DiscordLink; reclipId: number; dbProp: keyof IReclip }[]> {
+  packetLinks: { link: DiscordLink; reclipId: number; dbProp: keyof IAttributesReclipModel }[]
+): Promise<{ link: DiscordLink; reclipId: number; dbProp: keyof IAttributesReclipModel }[]> {
   const attachment_urls = packetLinks.map((x) => x.link.link);
   if (packetLinks.length === 0) {
     return [];
   }
   const linkMap = new Map<
     string,
-    { link: DiscordLink; reclipId: number; dbProp: keyof IReclip }
+    { link: DiscordLink; reclipId: number; dbProp: keyof IAttributesReclipModel }
   >();
   packetLinks.forEach((x) => linkMap.set(x.link.link, x));
 
@@ -173,7 +173,7 @@ async function updatePacketLinks(
 function tryGetActualLink(
   packetLinks: ContainerPacketLinks,
   reclipId: number,
-  dbProp: keyof IReclip,
+  dbProp: keyof IAttributesReclipModel,
   json: string | null
 ): string | null {
   if (!json) {
@@ -208,12 +208,12 @@ function getJson(str: string | null) {
 }
 
 class ContainerPacketLinks {
-  lastPacket: { link: DiscordLink; reclipId: number; dbProp: keyof IReclip }[] =
+  lastPacket: { link: DiscordLink; reclipId: number; dbProp: keyof IAttributesReclipModel }[] =
     [];
-  packets: { link: DiscordLink; reclipId: number; dbProp: keyof IReclip }[][] =
+  packets: { link: DiscordLink; reclipId: number; dbProp: keyof IAttributesReclipModel }[][] =
     [this.lastPacket];
 
-  add = (link: DiscordLink, reclipId: number, dbProp: keyof IReclip) => {
+  add = (link: DiscordLink, reclipId: number, dbProp: keyof IAttributesReclipModel) => {
     if (this.lastPacket.length < 50) {
       this.lastPacket.push({ link, reclipId, dbProp });
     } else {

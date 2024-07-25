@@ -22,13 +22,13 @@ export async function fetchCoubs(endpoint: string): Promise<Item[]> {
                 };
 
             return {
-              permalink: item?.permalink || null,
+              permalink: item?.permalink || "",
+              title: item?.title || "",
               videoMed: item?.file_versions?.html5?.video?.med?.url || null,
               videoHigh: item?.file_versions?.html5?.video?.high?.url || null,
               videoHigher:
                 item?.file_versions?.html5?.video?.higher?.url || null,
               audioMed: item?.file_versions?.html5?.audio?.med?.url || null,
-              title: item?.title || null,
               picture: item?.picture || null,
               blurDataURL: base64 || null,
             };

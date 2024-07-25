@@ -10,8 +10,10 @@ import {
   InferCreationAttributes,
   JSONB,
   DataTypes,
+  CreationAttributes,
+  Attributes,
+  UniqueConstraintError,
 } from "sequelize-cockroachdb";
-import { Json } from "sequelize/types/utils";
 
 const dbUrl = process.env.DATABASE_URL || "";
 
@@ -61,60 +63,27 @@ export const Reclip = sequelize.define<IReclipModel>("reclip", {
   },
 });
 
-const Picture = sequelize.define<IPictureModel>("picture", {
+export const Users = sequelize.define<IUsersModel>("users", {
   id: {
     type: INTEGER,
     autoIncrement: true,
     primaryKey: true,
     allowNull: false,
   },
-  picture: {
+  login: {
     type: STRING,
+    allowNull: false,
+    unique: true,
+  },
+  password: {
+    type: STRING,
+    allowNull: false,
+  },
+  createdAt: {
+    type: DataTypes.DATE,
     allowNull: false,
   },
 });
-
-const Video = sequelize.define<IVideoModel>("video", {
-  id: {
-    type: INTEGER,
-    autoIncrement: true,
-    primaryKey: true,
-    allowNull: false,
-  },
-  videoMed: {
-    type: STRING,
-    allowNull: false,
-  },
-  videoHigh: {
-    type: STRING,
-    allowNull: false,
-  },
-  videoHigher: {
-    type: STRING,
-    allowNull: false,
-  },
-});
-
-const Audio = sequelize.define<IAudioModel>("audio", {
-  id: {
-    type: INTEGER,
-    autoIncrement: true,
-    primaryKey: true,
-    allowNull: false,
-  },
-  audioMed: {
-    type: STRING,
-    allowNull: false,
-  },
-});
-
-Video.hasMany(Reclip);
-Audio.hasMany(Reclip);
-Picture.hasMany(Reclip);
-
-Reclip.belongsTo(Video);
-Reclip.belongsTo(Audio);
-Reclip.belongsTo(Picture);
 
 let sync = false;
 
@@ -132,16 +101,15 @@ async function syncDB() {
 export async function getReclipsDB(
   offset: number,
   limit: number
-): Promise<IReclip[] | null> {
+): Promise<Attributes<IReclipModel>[] | null> {
   // await syncDB();
   const reclips = await Reclip.findAll({
-    include: [Video, Audio, Picture],
     limit,
     offset,
     order: [["id", "DESC"]],
   });
   if (reclips) {
-    return reclips.map((reclip) => reclip.toJSON<IReclip>());
+    return reclips.map((reclip) => reclip.toJSON<Attributes<IReclipModel>>());
   } else {
     return null;
   }
@@ -155,148 +123,64 @@ export async function hasPermalink(permalink: string) {
   return count !== 0;
 }
 
-export async function createReclip(reclip: ICreateReclip) {
-  const {
-    permalink,
-    videoMed,
-    videoHigh,
-    videoHigher,
-    audioMed,
-    title,
-    picture,
-  } = reclip;
-
+export async function registerUser(login: string, password: string) {
   if (sync === false) {
     await syncDB();
   }
 
-  if (permalink === null) {
-    throw new Error("permalink is empty!");
+  try {
+    return await Users.create({ login, password });
+  } catch (error) {
+    if (error instanceof UniqueConstraintError) {
+      throw new Error("UniqueConstraintError");
+    }
+  }
+}
+
+export async function getUser(login: string) {
+  if (sync === false) {
+    await syncDB();
+  }
+  const user = await Users.findOne({ where: { login } });
+  if (!user) {
+    throw new Error("User not found");
+  }
+  return user;
+}
+
+export async function createReclip(reclip: CreationAttributes<IReclipModel>) {
+  if (sync === false) {
+    await syncDB();
   }
 
-  const audioObj = audioMed ? await Audio.create({ audioMed }) : null;
-  const videoObj =
-    videoMed || videoHigh || videoHigher
-      ? await Video.create({
-          videoMed,
-          videoHigh,
-          videoHigher,
-        })
-      : null;
-  const pictureObj = picture ? await Picture.create({ picture }) : null;
-
-  const reclipDB: IReclipDB = {
-    permalink,
-    title,
-    videoId: null,
-    audioId: null,
-    pictureId: null,
-    createdAt: new Date(),
-  };
-
-  if (videoObj?.id) {
-    reclipDB.videoId = videoObj.id;
-  }
-  if (audioObj?.id) {
-    reclipDB.audioId = audioObj.id;
-  }
-  if (pictureObj?.id) {
-    reclipDB.pictureId = pictureObj.id;
-  }
-
-  return await Reclip.create(reclipDB);
+  return await Reclip.create(reclip);
 }
 
-export interface ICreateReclip {
-  permalink: string | null;
-  videoMed: string | null;
-  videoHigh: string | null;
-  videoHigher: string | null;
-  audioMed: string | null;
-  title: string | null;
-  picture: string | null;
-  createdAt?: Date;
-}
+export interface IAttributesReclipModel extends Attributes<IReclipModel> {}
 
- interface IReclipDB extends Optional<any, string> {
-  permalink: string | null;
-  title: string | null;
-  videoId: number | null;
-  audioId: number | null;
-  pictureId: number | null;
-  createdAt: Date;
-}
-
-export interface IReclip extends Model<any, any> {
-  id: number;
-  permalink: string;
-  title: string;
-  videoId: string | null;
-  audioId: string | null;
-  pictureId: string | null;
-  video?: {
-    id: string;
-    videoMed: string | null;
-    videoHigh: string | null;
-    videoHigher: string | null;
-  };
-  audio?: {
-    id: string;
-    audioMed: string;
-  };
-  picture?: {
-    id: string;
-    picture: string;
-  };
-  videoMedLink: string | null;
-  videoHighLink: string | null;
-  videoHigherLink: string | null;
-  audioLink: string | null;
-  pictureLink: string | null;
-  createdAt: Date;
-}
-
-interface IVideoModel
-  extends Model<
-    InferAttributes<IVideoModel>,
-    InferCreationAttributes<IVideoModel>
-  > {
-  id: CreationOptional<number>;
-  videoMed: string | null;
-  videoHigh: string | null;
-  videoHigher: string | null;
-}
-
-interface IAudioModel
-  extends Model<
-    InferAttributes<IAudioModel>,
-    InferCreationAttributes<IAudioModel>
-  > {
-  id: CreationOptional<number>;
-  audioMed: string | null;
-}
-
-interface IPictureModel
-  extends Model<
-    InferAttributes<IPictureModel>,
-    InferCreationAttributes<IPictureModel>
-  > {
-  id: CreationOptional<number>;
-  picture: string | null;
-}
-
-interface IReclipModel
+export interface IReclipModel
   extends Model<
     InferAttributes<IReclipModel>,
     InferCreationAttributes<IReclipModel>
   > {
   id: CreationOptional<number>;
-  title: string | null;
-  permalink: string | null;
+  title: string;
+  permalink: string;
   videoMedLink: string | null;
   videoHighLink: string | null;
   videoHigherLink: string | null;
   audioLink: string | null;
   pictureLink: string | null;
-  createdAt: Date;
+  createdAt: CreationOptional<Date>;
+}
+
+interface IUsersModel
+  extends Model<
+    InferAttributes<IUsersModel>,
+    InferCreationAttributes<IUsersModel>
+  > {
+  id: CreationOptional<number>;
+  login: string;
+  password: string;
+  createdAt: CreationOptional<Date>;
 }
