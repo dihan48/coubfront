@@ -11,6 +11,7 @@ import {
 import { PlayerContainer } from "../playerContainer/playerContainer";
 import { createObserver, getIsShowPlayer } from "@/helpers/core";
 import { PlayerCore } from "../playerCore/playerCore";
+import useIsLogin from "@/hooks/useIsLogin";
 
 const CurrentVideoIndexContext = createContext<number>(0);
 
@@ -30,7 +31,12 @@ export function VideoList({ list, section }: IProps) {
   const [totalList, setTotalList] = useState(list);
   const [loading, setLoading] = useState(false);
 
+  const [isLogin, setIsLogin] = useIsLogin();
+
   const mapItemsRef = useRef<Map<Element, { index: number }>>(new Map());
+  const totalListRef = useRef(totalList);
+
+  totalListRef.current = totalList;
 
   const observerCallback = useCallback(
     (entries: IntersectionObserverEntry[]) => {
@@ -50,6 +56,8 @@ export function VideoList({ list, section }: IProps) {
   );
 
   const observerRef = useRef<IntersectionObserver>(observer);
+
+  const debounceTimeout = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     if (loading === false && currentVideoIndex >= totalList.length - 6) {
@@ -86,6 +94,30 @@ export function VideoList({ list, section }: IProps) {
       }
     }
   }, [totalList.length, currentVideoIndex, loading, page, section]);
+
+  useEffect(() => {
+    if (debounceTimeout.current) clearTimeout(debounceTimeout.current);
+
+    if (isLogin) {
+      const t = setTimeout(() => {
+        const video = totalListRef.current[currentVideoIndex];
+
+        fetch("/api/view", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ videoId: video.id }),
+        });
+      }, 500);
+
+      debounceTimeout.current = t;
+
+      return () => {
+        clearTimeout(t);
+      };
+    }
+  }, [currentVideoIndex, isLogin]);
 
   if (totalList == null) return null;
 

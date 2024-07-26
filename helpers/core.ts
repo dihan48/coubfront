@@ -55,6 +55,7 @@ export function getIsShowPlayer(c: number, i: number) {
 }
 
 export type Item = {
+  id: string;
   permalink: string;
   title: string;
   videoMed: string | null;

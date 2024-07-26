@@ -1,14 +1,19 @@
 import Link from "next/link";
 import { useRouter } from "next/router";
+import { RefObject } from "react";
+import Cookies from "js-cookie";
+import useIsLogin from "@/hooks/useIsLogin";
 
 import styles from "./navbar.module.css";
-import { RefObject } from "react";
 
 export function Navbar({
   scrollRef,
 }: {
   scrollRef: RefObject<HTMLDivElement>;
 }) {
+  const [isLogin, setIsLogin] = useIsLogin();
+  const router = useRouter();
+
   return (
     <div className={styles.container}>
       <nav className={styles.nav}>
@@ -17,10 +22,25 @@ export function Navbar({
         <NavLink href="/rising" label="В тренде" scrollRef={scrollRef} />
         <NavLink href="/fresh" label="Свежее" scrollRef={scrollRef} />
       </nav>
-
-      <Link href="/login" className={styles.reclips}>
-        <button>Войти</button>
-      </Link>
+      {router.pathname !== "/login" && router.pathname !== "/register" && (
+        <div>
+          {isLogin ? (
+            <button
+              onClick={() => {
+                Cookies.remove("token");
+                setIsLogin(false);
+              }}
+              className={styles.logout_button}
+            >
+              Выйти
+            </button>
+          ) : (
+            <Link href="/login" className={styles.login_button}>
+              Войти
+            </Link>
+          )}
+        </div>
+      )}
     </div>
   );
 }

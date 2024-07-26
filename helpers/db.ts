@@ -85,6 +85,31 @@ export const Users = sequelize.define<IUsersModel>("users", {
   },
 });
 
+export const Views = sequelize.define<IViewsModel>("views", {
+  reclipId: {
+    type: INTEGER,
+    primaryKey: true,
+    allowNull: false,
+  },
+  userId: {
+    type: INTEGER,
+    primaryKey: true,
+    allowNull: false,
+  },
+  count: {
+    type: INTEGER,
+    allowNull: false,
+  },
+  createdAt: {
+    type: DataTypes.DATE,
+    allowNull: false,
+  },
+  updatedAt: {
+    type: DataTypes.DATE,
+    allowNull: false,
+  },
+});
+
 let sync = false;
 
 async function syncDB() {
@@ -156,6 +181,21 @@ export async function createReclip(reclip: CreationAttributes<IReclipModel>) {
   return await Reclip.create(reclip);
 }
 
+export async function addView(reclipId: string, userId: string) {
+  if (sync === false) {
+    await syncDB();
+  }
+
+  const view = await Views.findOne({ where: { reclipId, userId } });
+
+  if (view) {
+    view.count += 1;
+    await view.save();
+  } else {
+    await Views.create({ reclipId, userId, count: 1 });
+  }
+}
+
 export interface IAttributesReclipModel extends Attributes<IReclipModel> {}
 
 export interface IReclipModel
@@ -163,7 +203,7 @@ export interface IReclipModel
     InferAttributes<IReclipModel>,
     InferCreationAttributes<IReclipModel>
   > {
-  id: CreationOptional<number>;
+  id: CreationOptional<string>;
   title: string;
   permalink: string;
   videoMedLink: string | null;
@@ -179,8 +219,20 @@ interface IUsersModel
     InferAttributes<IUsersModel>,
     InferCreationAttributes<IUsersModel>
   > {
-  id: CreationOptional<number>;
+  id: CreationOptional<string>;
   login: string;
   password: string;
   createdAt: CreationOptional<Date>;
+}
+
+interface IViewsModel
+  extends Model<
+    InferAttributes<IViewsModel>,
+    InferCreationAttributes<IViewsModel>
+  > {
+  reclipId: string;
+  userId: string;
+  count: CreationOptional<number>;
+  createdAt: CreationOptional<Date>;
+  updatedAt: CreationOptional<Date>;
 }

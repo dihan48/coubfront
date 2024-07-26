@@ -1,8 +1,8 @@
-// Next.js API route support: https://nextjs.org/docs/api-routes/introduction
 import { registerUser } from "@/helpers/db";
 import type { NextApiRequest, NextApiResponse } from "next";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
+import { serialize } from "cookie";
 
 export default async function handler(
   req: NextApiRequest,
@@ -71,9 +71,14 @@ export default async function handler(
   try {
     const user = await registerUser(login, passwordHash);
     if (user) {
+      const cookie = serialize("token", jwt.sign({ id: user.id }, "secret"), {
+        maxAge: 60 * 60 * 24 * 7,
+        path: "/",
+      });
+      res.setHeader("Set-Cookie", cookie);
+
       res.status(200).json({
         status: Status.Success,
-        token: jwt.sign({ id: user.id }, "secret"),
       });
     } else {
       res.status(400).json({

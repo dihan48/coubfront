@@ -1,4 +1,3 @@
-// Next.js API route support: https://nextjs.org/docs/api-routes/introduction
 import type { NextApiRequest, NextApiResponse } from "next";
 import type { Item } from "@/helpers/core";
 import { fetchReclip } from "@/helpers/fetchSelfApi";

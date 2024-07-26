@@ -28,3 +28,31 @@
 .link_active {
   filter: drop-shadow(0 0 0.75rem crimson);
 }
+
+.login_button {
+  display: block;
+  margin: 5px;
+  padding: 8px 16px;
+  white-space: nowrap;
+  background: hsl(300, 10%, 30%);
+  border: none;
+  cursor: pointer;
+  color: hsl(300, 50%, 80%);
+  font-family: inherit;
+  font-size: 16px;
+  border-radius: 5px;
+}
+
+.logout_button {
+  display: block;
+  margin: 5px;
+  padding: 8px 16px;
+  white-space: nowrap;
+  background: hsl(300, 5%, 25%);
+  border: none;
+  cursor: pointer;
+  color: hsl(300, 10%, 70%);
+  font-family: inherit;
+  font-size: 16px;
+  border-radius: 5px;
+}

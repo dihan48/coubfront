@@ -14,7 +14,7 @@ export async function fetchReclip(page: number): Promise<Item[]> {
   );
   console.timeEnd("getReclipsDB");
   const packetLinks = new ContainerPacketLinks();
-  const mapPreResult = new Map<number, Item>();
+  const mapPreResult = new Map<string, Item>();
   const result: Item[] = [];
 
   if (Array.isArray(resDB)) {
@@ -62,6 +62,7 @@ export async function fetchReclip(page: number): Promise<Item[]> {
       );
 
       mapPreResult.set(id, {
+        id,
         permalink,
         title,
         picture,
@@ -104,15 +105,29 @@ interface DiscordLink {
 }
 
 async function updatePacketLinks(
-  packetLinks: { link: DiscordLink; reclipId: number; dbProp: keyof IAttributesReclipModel }[]
-): Promise<{ link: DiscordLink; reclipId: number; dbProp: keyof IAttributesReclipModel }[]> {
+  packetLinks: {
+    link: DiscordLink;
+    reclipId: string;
+    dbProp: keyof IAttributesReclipModel;
+  }[]
+): Promise<
+  {
+    link: DiscordLink;
+    reclipId: string;
+    dbProp: keyof IAttributesReclipModel;
+  }[]
+> {
   const attachment_urls = packetLinks.map((x) => x.link.link);
   if (packetLinks.length === 0) {
     return [];
   }
   const linkMap = new Map<
     string,
-    { link: DiscordLink; reclipId: number; dbProp: keyof IAttributesReclipModel }
+    {
+      link: DiscordLink;
+      reclipId: string;
+      dbProp: keyof IAttributesReclipModel;
+    }
   >();
   packetLinks.forEach((x) => linkMap.set(x.link.link, x));
 
@@ -172,7 +187,7 @@ async function updatePacketLinks(
 
 function tryGetActualLink(
   packetLinks: ContainerPacketLinks,
-  reclipId: number,
+  reclipId: string,
   dbProp: keyof IAttributesReclipModel,
   json: string | null
 ): string | null {
@@ -208,12 +223,22 @@ function getJson(str: string | null) {
 }
 
 class ContainerPacketLinks {
-  lastPacket: { link: DiscordLink; reclipId: number; dbProp: keyof IAttributesReclipModel }[] =
-    [];
-  packets: { link: DiscordLink; reclipId: number; dbProp: keyof IAttributesReclipModel }[][] =
-    [this.lastPacket];
+  lastPacket: {
+    link: DiscordLink;
+    reclipId: string;
+    dbProp: keyof IAttributesReclipModel;
+  }[] = [];
+  packets: {
+    link: DiscordLink;
+    reclipId: string;
+    dbProp: keyof IAttributesReclipModel;
+  }[][] = [this.lastPacket];
 
-  add = (link: DiscordLink, reclipId: number, dbProp: keyof IAttributesReclipModel) => {
+  add = (
+    link: DiscordLink,
+    reclipId: string,
+    dbProp: keyof IAttributesReclipModel
+  ) => {
     if (this.lastPacket.length < 50) {
       this.lastPacket.push({ link, reclipId, dbProp });
     } else {
@@ -224,7 +249,13 @@ class ContainerPacketLinks {
   };
 }
 
-function dbPropToItemProp(dbProp: string): keyof Item {
+function dbPropToItemProp(dbProp: string): keyof {
+  picture: string;
+  audioMed: string;
+  videoMed: string;
+  videoHigh: string;
+  videoHigher: string;
+} {
   switch (dbProp) {
     case "pictureLink":
       return "picture";
@@ -237,6 +268,6 @@ function dbPropToItemProp(dbProp: string): keyof Item {
     case "videoHigherLink":
       return "videoHigher";
     default:
-      return dbProp as keyof Item;
+      throw new Error(`dbPropToItemProp: ${dbProp} not found`);
   }
 }
