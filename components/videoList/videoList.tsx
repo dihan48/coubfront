@@ -98,17 +98,18 @@ export function VideoList({ list, section }: IProps) {
   useEffect(() => {
     if (debounceTimeout.current) clearTimeout(debounceTimeout.current);
 
-    if (isLogin) {
+    if (isLogin && section === "self") {
       const t = setTimeout(() => {
         const video = totalListRef.current[currentVideoIndex];
-
-        fetch("/api/view", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ videoId: video.id }),
-        });
+        if (video.id) {
+          fetch("/api/view", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ videoId: video.id }),
+          });
+        }
       }, 500);
 
       debounceTimeout.current = t;
@@ -117,7 +118,7 @@ export function VideoList({ list, section }: IProps) {
         clearTimeout(t);
       };
     }
-  }, [currentVideoIndex, isLogin]);
+  }, [currentVideoIndex, isLogin, section]);
 
   if (totalList == null) return null;
 
