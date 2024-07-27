@@ -22,7 +22,7 @@ export function PlayerUI({ count }: IProps) {
           videoPlayed ? playerHandles.stop() : playerHandles.tryPlay();
         }}
       >
-        {count && <div className={styles.count}>👁 {count}</div>}
+        {count != null && <div className={styles.count}>👁 {count}</div>}
         {videoPlayed === false && <PlayButton />}
       </div>
       {audioPlayed === false && videoPlayed === true && <SoundButton />}

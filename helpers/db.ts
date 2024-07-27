@@ -132,15 +132,54 @@ async function syncDB() {
 
 export async function getReclipsDB(
   offset: number,
-  limit: number
+  limit: number,
+  userId?: string
 ): Promise<IReclipsDB[] | null> {
   if (sync === false) {
     await syncDB();
   }
 
+  if (userId) {
+    const reclips: IReclipsDB[] = await sequelize.query(
+      {
+        query: `
+          SELECT reclips.*, SUM(views.count) as count 
+          FROM reclips
+          LEFT JOIN views 
+          ON reclips.id = views."reclipId"
+          WHERE reclips.id NOT IN (
+              SELECT views."reclipId"
+              FROM views
+              WHERE views."userId" = ?
+          )
+          GROUP BY reclips.id
+          ORDER BY id DESC
+          LIMIT ? OFFSET ?;
+        `,
+        values: [userId, limit, offset],
+      },
+      {
+        type: QueryTypes.SELECT,
+      }
+    );
+
+    if (reclips) {
+      return reclips;
+    } else {
+      return null;
+    }
+  }
+
   const reclips: IReclipsDB[] = await sequelize.query(
     {
-      query: `SELECT reclips.*, SUM(views.count) as count FROM reclips LEFT JOIN views ON reclips.id = views."reclipId" GROUP BY reclips.id ORDER BY id DESC LIMIT ? OFFSET ?`,
+      query: `
+      SELECT reclips.*, SUM(views.count) as count 
+      FROM reclips 
+      LEFT JOIN views 
+      ON reclips.id = views."reclipId" 
+      GROUP BY reclips.id 
+      ORDER BY id DESC 
+      LIMIT ? OFFSET ?`,
       values: [limit, offset],
     },
     {
@@ -253,5 +292,5 @@ interface IViewsModel
 }
 
 export interface IReclipsDB extends Attributes<IReclipModel> {
-  count: number;
+  count?: number;
 }

@@ -5,12 +5,16 @@ import { getReclipsDB, IAttributesReclipModel, Reclip } from "./db";
 const limit = 10;
 const token = process.env.DISCORD_TOKEN || "";
 
-export async function fetchReclip(page: number): Promise<Item[]> {
+export async function fetchReclip(
+  page: number,
+  userId?: string
+): Promise<Item[]> {
   console.log({ page });
   console.time("getReclipsDB");
   const resDB = await getReclipsDB(
     page > 0 ? (page - 1) * limit : limit,
-    limit
+    limit,
+    userId
   );
   console.timeEnd("getReclipsDB");
   const packetLinks = new ContainerPacketLinks();
@@ -72,7 +76,7 @@ export async function fetchReclip(page: number): Promise<Item[]> {
         videoHigh,
         videoHigher,
         blurDataURL: null,
-        count,
+        count: count ? count : 0,
       });
     }
 

@@ -1,3 +1,5 @@
+import type { NextApiRequest, NextApiResponse } from "next";
+import jwt from "jsonwebtoken";
 import type { NextPageWithLayout } from "./_app";
 import type { Item, SiteSection } from "@/helpers/core";
 import { ReactElement } from "react";
@@ -15,17 +17,30 @@ Page.getLayout = function getLayout(page: ReactElement) {
   return <Layout>{page}</Layout>;
 };
 
-export const getStaticProps = async () => {
+export const getServerSideProps = async ({ req }: { req: NextApiRequest }) => {
   let reclips: Item[] = [];
+
   try {
-    reclips = await fetchReclip(1);
+    if (req.cookies?.token) {
+      try {
+        const decoded = jwt.verify(req.cookies.token, "secret");
+        // console.log({ decoded });
+        if (decoded) {
+          const { id } = decoded as { id: string };
+
+          if (id) {
+            reclips = await fetchReclip(1, id);
+          }
+        }
+      } catch (error) {}
+    } else {
+      reclips = await fetchReclip(1);
+    }
   } catch (error) {
     console.log(error);
   }
-  return {
-    props: { reclips },
-    revalidate: 10,
-  };
+
+  return { props: { reclips } };
 };
 
 interface IPageProps {
