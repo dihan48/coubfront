@@ -13,6 +13,8 @@ import {
   CreationAttributes,
   Attributes,
   UniqueConstraintError,
+  Op,
+  QueryTypes,
 } from "sequelize-cockroachdb";
 
 const dbUrl = process.env.DATABASE_URL || "";
@@ -63,7 +65,7 @@ export const Reclip = sequelize.define<IReclipModel>("reclip", {
   },
 });
 
-export const Users = sequelize.define<IUsersModel>("users", {
+export const User = sequelize.define<IUsersModel>("user", {
   id: {
     type: INTEGER,
     autoIncrement: true,
@@ -85,7 +87,7 @@ export const Users = sequelize.define<IUsersModel>("users", {
   },
 });
 
-export const Views = sequelize.define<IViewsModel>("views", {
+export const View = sequelize.define<IViewsModel>("view", {
   reclipId: {
     type: INTEGER,
     primaryKey: true,
@@ -110,6 +112,11 @@ export const Views = sequelize.define<IViewsModel>("views", {
   },
 });
 
+View.sync(); // sync the model with the data source
+
+Reclip.hasMany(View);
+View.belongsTo(Reclip);
+
 let sync = false;
 
 async function syncDB() {
@@ -126,15 +133,23 @@ async function syncDB() {
 export async function getReclipsDB(
   offset: number,
   limit: number
-): Promise<Attributes<IReclipModel>[] | null> {
-  // await syncDB();
-  const reclips = await Reclip.findAll({
-    limit,
-    offset,
-    order: [["id", "DESC"]],
-  });
+): Promise<IReclipsDB[] | null> {
+  if (sync === false) {
+    await syncDB();
+  }
+
+  const reclips: IReclipsDB[] = await sequelize.query(
+    {
+      query: `SELECT reclips.*, SUM(views.count) as count FROM reclips LEFT JOIN views ON reclips.id = views."reclipId" GROUP BY reclips.id ORDER BY id DESC LIMIT ? OFFSET ?`,
+      values: [limit, offset],
+    },
+    {
+      type: QueryTypes.SELECT,
+    }
+  );
+
   if (reclips) {
-    return reclips.map((reclip) => reclip.toJSON<Attributes<IReclipModel>>());
+    return reclips;
   } else {
     return null;
   }
@@ -154,7 +169,7 @@ export async function registerUser(login: string, password: string) {
   }
 
   try {
-    return await Users.create({ login, password });
+    return await User.create({ login, password });
   } catch (error) {
     if (error instanceof UniqueConstraintError) {
       throw new Error("UniqueConstraintError");
@@ -166,7 +181,7 @@ export async function getUser(login: string) {
   if (sync === false) {
     await syncDB();
   }
-  const user = await Users.findOne({ where: { login } });
+  const user = await User.findOne({ where: { login } });
   if (!user) {
     throw new Error("User not found");
   }
@@ -186,13 +201,13 @@ export async function addView(reclipId: string, userId: string) {
     await syncDB();
   }
 
-  const view = await Views.findOne({ where: { reclipId, userId } });
+  const view = await View.findOne({ where: { reclipId, userId } });
 
   if (view) {
     view.count += 1;
     await view.save();
   } else {
-    await Views.create({ reclipId, userId, count: 1 });
+    await View.create({ reclipId, userId, count: 1 });
   }
 }
 
@@ -235,4 +250,8 @@ interface IViewsModel
   count: CreationOptional<number>;
   createdAt: CreationOptional<Date>;
   updatedAt: CreationOptional<Date>;
+}
+
+export interface IReclipsDB extends Attributes<IReclipModel> {
+  count: number;
 }

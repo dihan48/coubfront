@@ -101,7 +101,7 @@ export function VideoList({ list, section }: IProps) {
     if (isLogin && section === "self") {
       const t = setTimeout(() => {
         const video = totalListRef.current[currentVideoIndex];
-        if (video.id) {
+        if (video?.id) {
           fetch("/api/view", {
             method: "POST",
             headers: {

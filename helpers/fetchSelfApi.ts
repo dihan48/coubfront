@@ -28,6 +28,7 @@ export async function fetchReclip(page: number): Promise<Item[]> {
         videoHigherLink,
         audioLink,
         pictureLink,
+        count,
       } = resDB[i];
 
       const picture = tryGetActualLink(
@@ -71,6 +72,7 @@ export async function fetchReclip(page: number): Promise<Item[]> {
         videoHigh,
         videoHigher,
         blurDataURL: null,
+        count,
       });
     }
 

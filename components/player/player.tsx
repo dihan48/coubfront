@@ -9,6 +9,7 @@ import {
 } from "../playerCore/playerCore";
 
 import styles from "./player.module.css";
+import { PlayerUI } from "../playUI/playerUI";
 
 export function Player({ data, index }: IProps) {
   const { permalink, audioMed, title } = data;
@@ -74,6 +75,7 @@ export function Player({ data, index }: IProps) {
       <video hidden src={getVideoSrc(data)} />
       <audio hidden src={audioMed || ""} />
       <div ref={playerRef} className={styles.player} />
+      <PlayerUI count={data?.count} />
     </div>
   );
 }

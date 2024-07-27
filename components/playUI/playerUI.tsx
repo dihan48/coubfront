@@ -1,10 +1,14 @@
 import { PlayButton } from "./playButton";
 import { SoundButton } from "./soundButton";
-import { useAudioPlayed, usePlayerHandles, useVideoPlayed } from "../playerCore/playerCore";
+import {
+  useAudioPlayed,
+  usePlayerHandles,
+  useVideoPlayed,
+} from "../playerCore/playerCore";
 
 import styles from "./playerUI.module.css";
 
-export function PlayerUI() {
+export function PlayerUI({ count }: IProps) {
   const [videoPlayed] = useVideoPlayed();
   const [audioPlayed] = useAudioPlayed();
 
@@ -18,11 +22,14 @@ export function PlayerUI() {
           videoPlayed ? playerHandles.stop() : playerHandles.tryPlay();
         }}
       >
+        {count && <div className={styles.count}>👁 {count}</div>}
         {videoPlayed === false && <PlayButton />}
       </div>
-      {audioPlayed === false && videoPlayed === true && (
-        <SoundButton />
-      )}
+      {audioPlayed === false && videoPlayed === true && <SoundButton />}
     </>
   );
+}
+
+interface IProps {
+  count?: number;
 }

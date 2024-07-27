@@ -64,6 +64,7 @@ export type Item = {
   audioMed: string | null;
   picture: string | null;
   blurDataURL: string | null;
+  count?: number;
 };
 
 export type SiteSection = "daily" | "rising" | "fresh" | "self";
