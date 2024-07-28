@@ -143,26 +143,34 @@ export async function getReclipsDB(
     const reclips: IReclipsDB[] = await sequelize.query(
       {
         query: `
-          SELECT reclips.*, SUM("views"."count") as "count"
-          FROM 
-            (SELECT reclips.*
+          SELECT
+            SUM("views"."count") as "count", reclips.*
+          FROM
+            (
+              SELECT reclips.*
               FROM 
-                (SELECT * FROM reclips 
-                ORDER BY id DESC
-                LIMIT ? + (
-                  SELECT COUNT("reclipId")
-                  FROM views
-                  WHERE "userId" = ?
-                )
-                OFFSET ?) as reclips
-              LEFT JOIN views ON reclips.id = "views"."reclipId" AND views."userId" = ?
+                (
+                  SELECT * FROM reclips 
+                  ORDER BY id DESC
+                  LIMIT ? +
+                  (
+                    SELECT COUNT("reclipId")
+                    FROM views
+                    WHERE "userId" = ?
+                  )
+                  OFFSET ?
+                ) as reclips
+              LEFT JOIN views 
+                ON reclips.id = "views"."reclipId" AND views."userId" = ?
               WHERE "views"."reclipId" IS NULL
               GROUP BY reclips.id
-              LIMIT ?) as reclips
+              LIMIT ?
+            ) as reclips
           LEFT JOIN "views" ON reclips.id = "views"."reclipId"
-          GROUP BY reclips.id;
+          GROUP BY reclips.id
+          LIMIT ?;
         `,
-        values: [limit, userId, offset, userId, limit],
+        values: [limit, userId, offset, userId, limit, limit],
       },
       {
         type: QueryTypes.SELECT,
@@ -178,19 +186,21 @@ export async function getReclipsDB(
     const reclips: IReclipsDB[] = await sequelize.query(
       {
         query: `
-          SELECT reclips.*, SUM(views.count) as count
-            FROM (
-              SELECT reclips.*
-              FROM reclips  
-              ORDER BY id DESC 
-              LIMIT ? OFFSET ?
-            ) as reclips
+          SELECT
+            SUM(views.count) as count, reclips.*
+          FROM (
+            SELECT reclips.*
+            FROM reclips  
+            ORDER BY id DESC 
+            LIMIT ? OFFSET ?
+          ) as reclips
           LEFT JOIN views 
-          ON reclips.id = views."reclipId" 
+          ON reclips.id = views."reclipId"
           GROUP BY reclips.id
-          ORDER BY reclips.id DESC;
+          ORDER BY reclips.id DESC
+          LIMIT ?;
         `,
-        values: [limit, offset],
+        values: [limit, offset, limit],
       },
       {
         type: QueryTypes.SELECT,
