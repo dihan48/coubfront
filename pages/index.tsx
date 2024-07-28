@@ -17,30 +17,40 @@ Page.getLayout = function getLayout(page: ReactElement) {
   return <Layout>{page}</Layout>;
 };
 
-export const getServerSideProps = async ({ req }: { req: NextApiRequest }) => {
-  let reclips: Item[] = [];
+let reclips: Item[] = [];
+let lastUpdate: number = 0;
 
+export const getServerSideProps = async ({
+  req,
+  res,
+}: {
+  req: NextApiRequest;
+  res: NextApiResponse;
+}) => {
   try {
     if (req.cookies?.token) {
       try {
         const decoded = jwt.verify(req.cookies.token, "secret");
-        // console.log({ decoded });
         if (decoded) {
           const { id } = decoded as { id: string };
 
           if (id) {
-            reclips = await fetchReclip(1, id);
+            const reclips = await fetchReclip(1, id);
+            return { props: { reclips } };
           }
         }
       } catch (error) {}
     } else {
-      reclips = await fetchReclip(1);
+      if (Date.now() - lastUpdate > 1000 * 10) {
+        lastUpdate = Date.now();
+        reclips = await fetchReclip(1);
+      }
+
+      return { props: { reclips } };
     }
   } catch (error) {
     console.log(error);
   }
-
-  return { props: { reclips } };
 };
 
 interface IPageProps {

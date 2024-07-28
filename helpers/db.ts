@@ -143,20 +143,26 @@ export async function getReclipsDB(
     const reclips: IReclipsDB[] = await sequelize.query(
       {
         query: `
-          SELECT reclips.*, SUM(views.count) as count 
-          FROM reclips
-          LEFT JOIN views 
-          ON reclips.id = views."reclipId"
-          WHERE reclips.id NOT IN (
-              SELECT views."reclipId"
-              FROM views
-              WHERE views."userId" = ?
-          )
-          GROUP BY reclips.id
-          ORDER BY id DESC
-          LIMIT ? OFFSET ?;
+          SELECT reclips.*, SUM("views"."count") as "count"
+          FROM 
+            (SELECT reclips.*
+              FROM 
+                (SELECT * FROM reclips 
+                ORDER BY id DESC
+                LIMIT ? + (
+                  SELECT COUNT("reclipId")
+                  FROM views
+                  WHERE "userId" = ?
+                )
+                OFFSET ?) as reclips
+              LEFT JOIN views ON reclips.id = "views"."reclipId" AND views."userId" = ?
+              WHERE "views"."reclipId" IS NULL
+              GROUP BY reclips.id
+              LIMIT ?) as reclips
+          LEFT JOIN "views" ON reclips.id = "views"."reclipId"
+          GROUP BY reclips.id;
         `,
-        values: [userId, limit, offset],
+        values: [limit, userId, offset, userId, limit],
       },
       {
         type: QueryTypes.SELECT,
@@ -168,29 +174,34 @@ export async function getReclipsDB(
     } else {
       return null;
     }
-  }
-
-  const reclips: IReclipsDB[] = await sequelize.query(
-    {
-      query: `
-      SELECT reclips.*, SUM(views.count) as count 
-      FROM reclips 
-      LEFT JOIN views 
-      ON reclips.id = views."reclipId" 
-      GROUP BY reclips.id 
-      ORDER BY id DESC 
-      LIMIT ? OFFSET ?`,
-      values: [limit, offset],
-    },
-    {
-      type: QueryTypes.SELECT,
-    }
-  );
-
-  if (reclips) {
-    return reclips;
   } else {
-    return null;
+    const reclips: IReclipsDB[] = await sequelize.query(
+      {
+        query: `
+          SELECT reclips.*, SUM(views.count) as count
+            FROM (
+              SELECT reclips.*
+              FROM reclips  
+              ORDER BY id DESC 
+              LIMIT ? OFFSET ?
+            ) as reclips
+          LEFT JOIN views 
+          ON reclips.id = views."reclipId" 
+          GROUP BY reclips.id
+          ORDER BY reclips.id DESC;
+        `,
+        values: [limit, offset],
+      },
+      {
+        type: QueryTypes.SELECT,
+      }
+    );
+
+    if (reclips) {
+      return reclips;
+    } else {
+      return null;
+    }
   }
 }
 
