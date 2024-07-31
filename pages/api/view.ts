@@ -16,7 +16,8 @@ export default async function handler(
         const { id } = decoded as { id: string };
 
         if (id) {
-          addView(videoId, id);
+          const view = await addView(videoId, id);
+          console.log(view.createdAt);
         }
       }
     } catch (error) {}

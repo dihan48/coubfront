@@ -279,9 +279,9 @@ export async function addView(reclipId: string, userId: string) {
 
   if (view) {
     view.count += 1;
-    await view.save();
+    return await view.save();
   } else {
-    await View.create({ reclipId, userId, count: 1 });
+    return await View.create({ reclipId, userId, count: 1 });
   }
 }
 
