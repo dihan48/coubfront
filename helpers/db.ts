@@ -133,44 +133,58 @@ async function syncDB() {
 export async function getReclipsDB(
   offset: number,
   limit: number,
-  userId?: string
+  userId?: string,
+  date?: number
 ): Promise<IReclipsDB[] | null> {
   if (sync === false) {
     await syncDB();
   }
 
   if (userId) {
+    const dateStamp = date
+      ? new Date(date).toISOString()
+      : new Date().toISOString();
+
     const reclips: IReclipsDB[] = await sequelize.query(
       {
         query: `
-          SELECT
-            SUM("views"."count") as "count", reclips.*
-          FROM
+          select
+            SUM(views.count) as count,
+            reclips.*
+          from
             (
-              SELECT reclips.*
-              FROM 
-                (
-                  SELECT * FROM reclips 
-                  ORDER BY id DESC
-                  LIMIT ? +
-                  (
-                    SELECT COUNT("reclipId")
-                    FROM views
-                    WHERE "userId" = ?
-                  )
-                  OFFSET ?
-                ) as reclips
-              LEFT JOIN views 
-                ON reclips.id = "views"."reclipId" AND views."userId" = ?
-              WHERE "views"."reclipId" IS NULL
-              GROUP BY reclips.id
-              LIMIT ?
-            ) as reclips
-          LEFT JOIN "views" ON reclips.id = "views"."reclipId"
-          GROUP BY reclips.id
-          LIMIT ?;
+            select
+              reclips.*
+            from
+              reclips
+            left join views on
+                views."createdAt" < ?
+                and reclips.id = views."reclipId"
+                and views."userId" = ?
+            where
+              views."reclipId" is null
+            group by
+              reclips.id
+            order by
+              id desc
+            limit ?
+            offset ?
+          ) as reclips
+          left join views on
+            reclips.id = views."reclipId"
+          group by
+            reclips.id
+          order by
+            id desc
+          limit ?;
         `,
-        values: [limit, userId, offset, userId, limit, limit],
+        values: [
+          dateStamp,
+          userId,
+          limit,
+          offset,
+          limit,
+        ],
       },
       {
         type: QueryTypes.SELECT,

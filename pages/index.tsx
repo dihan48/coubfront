@@ -6,11 +6,16 @@ import { ReactElement } from "react";
 import Layout from "@/components/layouts/main";
 import { VideoList } from "@/components/videoList/videoList";
 import { fetchReclip } from "@/helpers/fetchSelfApi";
+import { SectionProvider } from "@/hooks/useSection";
 
 const section: SiteSection = "self";
 
-const Page: NextPageWithLayout<IPageProps> = ({ reclips }) => {
-  return <VideoList list={reclips} section={section} />;
+const Page: NextPageWithLayout<IPageProps> = ({ reclips, date }) => {
+  return (
+    <SectionProvider value={section}>
+      <VideoList list={reclips} date={date} />
+    </SectionProvider>
+  );
 };
 
 Page.getLayout = function getLayout(page: ReactElement) {
@@ -36,7 +41,7 @@ export const getServerSideProps = async ({
 
           if (id) {
             const reclips = await fetchReclip(1, id);
-            return { props: { reclips } };
+            return { props: { reclips, date: Date.now() } };
           }
         }
       } catch (error) {}
@@ -55,6 +60,7 @@ export const getServerSideProps = async ({
 
 interface IPageProps {
   reclips: Array<Item>;
+  date?: number;
 }
 
 export default Page;

@@ -7,14 +7,16 @@ const token = process.env.DISCORD_TOKEN || "";
 
 export async function fetchReclip(
   page: number,
-  userId?: string
+  userId?: string,
+  date?: number
 ): Promise<Item[]> {
   console.log({ page });
   console.time("getReclipsDB");
   const resDB = await getReclipsDB(
     page > 0 ? (page - 1) * limit : limit,
     limit,
-    userId
+    userId,
+    date
   );
   console.timeEnd("getReclipsDB");
   const packetLinks = new ContainerPacketLinks();

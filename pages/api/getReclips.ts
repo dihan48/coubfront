@@ -8,6 +8,7 @@ export default async function handler(
   res: NextApiResponse<Data>
 ) {
   const page = req.query?.page;
+  const date = req.query?.date;
 
   if (req.cookies?.token) {
     try {
@@ -19,7 +20,8 @@ export default async function handler(
         if (id) {
           const reclips = await fetchReclip(
             typeof page === "string" ? parseInt(page) : 1,
-            id
+            id,
+            typeof date === "string" ? parseInt(date) : undefined
           );
           res.status(200).json({ reclips });
         }

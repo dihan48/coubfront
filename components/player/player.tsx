@@ -8,20 +8,25 @@ import {
   useVideoPlayed,
 } from "../playerCore/playerCore";
 
-import styles from "./player.module.css";
 import { PlayerUI } from "../playUI/playerUI";
+import useIsLogin from "@/hooks/useIsLogin";
+import { useSection } from "@/hooks/useSection";
+
+import styles from "./player.module.css";
 
 export function Player({ data, index }: IProps) {
-  const { permalink, audioMed, title } = data;
+  const { id, permalink, audioMed, title } = data;
 
   const [videoPlayed, setVideoPlayed] = useVideoPlayed();
   const currentVideoIndex = useCurrentVideoIndex();
+  const [isLogin, setIsLogin] = useIsLogin();
+  const playerHandles = usePlayerHandles();
+  const section = useSection();
 
   const playerRef = useRef<HTMLDivElement>(null);
+  const debounceTimeout = useRef<NodeJS.Timeout | null>(null);
 
   const isCentered = index === currentVideoIndex;
-
-  const playerHandles = usePlayerHandles();
 
   const setupPlayer = useCallback(
     () => playerHandles.setupPlayer(playerRef, data),
@@ -34,15 +39,41 @@ export function Player({ data, index }: IProps) {
     }
   }, [isCentered, setupPlayer]);
 
-  useEffect(
-    () =>
-      void (isCentered
-        ? videoPlayed
-          ? playerHandles.tryPlay()
-          : playerHandles.stop()
-        : 0),
-    [isCentered, videoPlayed, playerHandles]
-  );
+  useEffect(() => {
+    if (isCentered) {
+      if (videoPlayed) {
+        playerHandles.tryPlay();
+
+        if (debounceTimeout.current) clearTimeout(debounceTimeout.current);
+
+        if (isLogin && section === "self") {
+          const t = setTimeout(() => {
+            if (id) {
+              fetch("/api/view", {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json",
+                },
+                body: JSON.stringify({ videoId: id }),
+              });
+            }
+          }, 750);
+
+          debounceTimeout.current = t;
+
+          return () => {
+            clearTimeout(t);
+          };
+        }
+      } else {
+        playerHandles.stop();
+      }
+    } else {
+      if (debounceTimeout.current) {
+        clearTimeout(debounceTimeout.current);
+      }
+    }
+  }, [isCentered, videoPlayed, playerHandles, id, isLogin, section]);
 
   return (
     <div

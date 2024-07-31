@@ -11,7 +11,7 @@ import {
 import { PlayerContainer } from "../playerContainer/playerContainer";
 import { createObserver, getIsShowPlayer } from "@/helpers/core";
 import { PlayerCore } from "../playerCore/playerCore";
-import useIsLogin from "@/hooks/useIsLogin";
+import { useSection } from "@/hooks/useSection";
 
 const CurrentVideoIndexContext = createContext<number>(0);
 
@@ -25,13 +25,12 @@ export function useCurrentVideoIndex() {
   return context;
 }
 
-export function VideoList({ list, section }: IProps) {
+export function VideoList({ list, date }: IProps) {
   const [page, setPage] = useState(1);
   const [currentVideoIndex, setCurrentVideoIndex] = useState(0);
   const [totalList, setTotalList] = useState(list);
   const [loading, setLoading] = useState(false);
-
-  const [isLogin, setIsLogin] = useIsLogin();
+  const section = useSection();
 
   const mapItemsRef = useRef<Map<Element, { index: number }>>(new Map());
   const totalListRef = useRef(totalList);
@@ -57,8 +56,6 @@ export function VideoList({ list, section }: IProps) {
 
   const observerRef = useRef<IntersectionObserver>(observer);
 
-  const debounceTimeout = useRef<NodeJS.Timeout | null>(null);
-
   useEffect(() => {
     if (loading === false && currentVideoIndex >= totalList.length - 6) {
       setLoading(true);
@@ -80,7 +77,7 @@ export function VideoList({ list, section }: IProps) {
             setLoading(false);
           } else {
             const { reclips } = await fetch(
-              `/api/getReclips?page=${page + 1}`
+              `/api/getReclips?page=${page + 1}${date ? `&date=${date}` : ""}`
             ).then((res) => res.json());
             if (reclips.length !== 0) {
               setTotalList((prev) => [...prev, ...reclips]);
@@ -93,32 +90,7 @@ export function VideoList({ list, section }: IProps) {
         setLoading(false);
       }
     }
-  }, [totalList.length, currentVideoIndex, loading, page, section]);
-
-  useEffect(() => {
-    if (debounceTimeout.current) clearTimeout(debounceTimeout.current);
-
-    if (isLogin && section === "self") {
-      const t = setTimeout(() => {
-        const video = totalListRef.current[currentVideoIndex];
-        if (video?.id) {
-          fetch("/api/view", {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({ videoId: video.id }),
-          });
-        }
-      }, 500);
-
-      debounceTimeout.current = t;
-
-      return () => {
-        clearTimeout(t);
-      };
-    }
-  }, [currentVideoIndex, isLogin, section]);
+  }, [totalList.length, currentVideoIndex, loading, page, section, date]);
 
   if (totalList == null) return null;
 
@@ -145,5 +117,5 @@ export function VideoList({ list, section }: IProps) {
 
 interface IProps {
   list: Item[];
-  section: SiteSection;
+  date?: number;
 }
