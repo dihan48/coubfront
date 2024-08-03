@@ -42,13 +42,13 @@ const Page: NextPageWithLayout<IPageProps> = ({ data, id }) => {
           <meta
             property="og:video"
             content={
-              encodeURI(`https://cyclip.com/api/t?url=${data.videoMed}`) || ""
+              encodeURI(`https://cyclip.com/api/t?url=https://3fc4ed44-3fbc-419a-97a1-a29742511391.selcdn.net/coub_storage/coub/simple/cw_video_for_sharing/878aef7af75/051b12cf13c7f96efb468/1721987655_looped_1721987654.mp4`) || ""
             }
           />
           <meta
             property="og:video:secure_url"
             content={
-              encodeURI(`https://cyclip.com/api/t?url=${data.videoMed}`) || ""
+              encodeURI(`https://cyclip.com/api/t?url=https://3fc4ed44-3fbc-419a-97a1-a29742511391.selcdn.net/coub_storage/coub/simple/cw_video_for_sharing/878aef7af75/051b12cf13c7f96efb468/1721987655_looped_1721987654.mp4`) || ""
             }
           />
           <meta property="og:video:type" content="video/mp4" />
