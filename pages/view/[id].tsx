@@ -39,15 +39,19 @@ const Page: NextPageWithLayout<IPageProps> = ({ data, id }) => {
           />
           <meta property="og:type" content="video.other" /> */}
 
-          <meta property="og:video" content={`${data.videoMed}` || ""} />
+          <meta
+            property="og:video"
+            content={
+              encodeURI(`https://cyclip.com/api/t?url=${data.videoMed}`) || ""
+            }
+          />
           <meta
             property="og:video:secure_url"
-            content={`${data.videoMed}` || ""}
+            content={
+              encodeURI(`https://cyclip.com/api/t?url=${data.videoMed}`) || ""
+            }
           />
-          <meta
-            property="og:video:type"
-            content="application/mp4"
-          />
+          <meta property="og:video:type" content="application/mp4" />
           <meta property="og:video:width" content="400" />
           <meta property="og:video:height" content="300" />
         </Head>
