@@ -51,7 +51,7 @@ const Page: NextPageWithLayout<IPageProps> = ({ data, id }) => {
               encodeURI(`https://cyclip.com/api/t?url=${data.videoMed}`) || ""
             }
           />
-          <meta property="og:video:type" content="application/mp4" />
+          <meta property="og:video:type" content="video/mp4" />
           <meta property="og:video:width" content="400" />
           <meta property="og:video:height" content="300" />
         </Head>
