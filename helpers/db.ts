@@ -178,13 +178,7 @@ export async function getReclipsDB(
             id desc
           limit ?;
         `,
-        values: [
-          dateStamp,
-          userId,
-          limit,
-          offset,
-          limit,
-        ],
+        values: [dateStamp, userId, limit, offset, limit],
       },
       {
         type: QueryTypes.SELECT,
@@ -227,6 +221,37 @@ export async function getReclipsDB(
       return null;
     }
   }
+}
+
+export async function getVideo(reclipId: string): Promise<IReclipsDB | null> {
+  if (sync === false) {
+    await syncDB();
+  }
+
+  const reclip: IReclipsDB[] = await sequelize.query(
+    {
+      query: `
+        SELECT
+          SUM(views.count) as count, reclips.*
+        FROM (
+          SELECT reclips.*
+          FROM reclips  
+          WHERE reclips.id = ?
+          LIMIT 1
+        ) as reclips
+        LEFT JOIN views 
+        ON reclips.id = views."reclipId"
+        GROUP BY reclips.id
+        LIMIT 1;
+      `,
+      values: [reclipId],
+    },
+    {
+      type: QueryTypes.SELECT,
+    }
+  );
+
+  return reclip?.[0] || null;
 }
 
 export async function hasPermalink(permalink: string) {

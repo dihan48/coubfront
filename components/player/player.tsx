@@ -13,9 +13,13 @@ import useIsLogin from "@/hooks/useIsLogin";
 import { useSection } from "@/hooks/useSection";
 
 import styles from "./player.module.css";
+import { decimalToBase62 } from "@/helpers/utils";
+import Link from "next/link";
 
 export function Player({ data, index }: IProps) {
   const { id, permalink, audioMed, title } = data;
+
+  const videoId = id ? decimalToBase62(id) : null;
 
   const [videoPlayed, setVideoPlayed] = useVideoPlayed();
   const currentVideoIndex = useCurrentVideoIndex();
@@ -88,9 +92,16 @@ export function Player({ data, index }: IProps) {
             }
       }
     >
-      <a href={`https://coub.com/view/${permalink}`} className={styles.link}>
-        {title}
-      </a>
+      {section === "self" ? (
+        <Link href={`/view/${videoId}`} className={styles.link}>
+          {title}
+        </Link>
+      ) : (
+        <a href={`https://coub.com/view/${permalink}`} className={styles.link}>
+          {title}
+        </a>
+      )}
+
       <Image
         src={data.picture || ""}
         alt=""

@@ -1,6 +1,6 @@
 import { getPlaiceholder } from "plaiceholder";
 import type { Item } from "@/helpers/core";
-import { getReclipsDB, IAttributesReclipModel, Reclip } from "./db";
+import { getReclipsDB, getVideo, IAttributesReclipModel, Reclip } from "./db";
 
 const limit = 10;
 const token = process.env.DISCORD_TOKEN || "";
@@ -101,6 +101,80 @@ export async function fetchReclip(
   mapPreResult.forEach((reclip) => {
     result.push(reclip);
   });
+
+  return result;
+}
+
+export async function fetchReclipFromId(
+  reclipId: string
+): Promise<Item | null> {
+  const reclip = await getVideo(reclipId);
+
+  if (!reclip) {
+    return null;
+  }
+
+  const packetLinks = new ContainerPacketLinks();
+
+  const {
+    id,
+    permalink,
+    title,
+    videoMedLink,
+    videoHighLink,
+    videoHigherLink,
+    audioLink,
+    pictureLink,
+    count,
+  } = reclip;
+
+  const picture = tryGetActualLink(packetLinks, id, "pictureLink", pictureLink);
+  const audioMed = tryGetActualLink(packetLinks, id, "audioLink", audioLink);
+  const videoMed = tryGetActualLink(
+    packetLinks,
+    id,
+    "videoMedLink",
+    videoMedLink
+  );
+  const videoHigh = tryGetActualLink(
+    packetLinks,
+    id,
+    "videoHighLink",
+    videoHighLink
+  );
+  const videoHigher = tryGetActualLink(
+    packetLinks,
+    id,
+    "videoHigherLink",
+    videoHigherLink
+  );
+
+  const result = {
+    id,
+    permalink,
+    title,
+    picture,
+    audioMed,
+    videoMed,
+    videoHigh,
+    videoHigher,
+    blurDataURL: null,
+    count: count ? count : 0,
+  };
+
+  await Promise.all(
+    packetLinks.packets.map(async (packet) => {
+      return await updatePacketLinks(packet).then((links) => {
+        links.forEach(({ link, reclipId, dbProp }) => {
+          if (result) {
+            result[dbPropToItemProp(dbProp)] = link.link;
+          }
+          const json = JSON.stringify(link);
+          Reclip.update({ [dbProp]: json }, { where: { id: reclipId } });
+        });
+      });
+    })
+  );
 
   return result;
 }
