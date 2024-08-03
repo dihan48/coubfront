@@ -19,7 +19,7 @@ const Page: NextPageWithLayout<IPageProps> = ({ data, id }) => {
           <meta property="og:title" content="og title" />
           <meta property="og:description" content="og description" />
           <meta property="og:site_name" content="Cyclip" />
-          
+
           {/* <meta property="og:image" content={`${data.picture}` || ""} />
           <meta property="og:image:width" content="480" />
           <meta property="og:image:height" content="480" />
@@ -46,12 +46,11 @@ const Page: NextPageWithLayout<IPageProps> = ({ data, id }) => {
           />
           <meta
             property="og:video:type"
-            content="video/mp4"
+            content="application/mp4"
           />
           <meta property="og:video:width" content="400" />
           <meta property="og:video:height" content="300" />
         </Head>
-        <a href={`${data.picture}`}>a</a>
         <PlayerLayer data={data} index={0} />
       </>
     </PlayerCore>
