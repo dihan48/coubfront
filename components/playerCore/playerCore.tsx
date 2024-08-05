@@ -115,6 +115,12 @@ export function PlayerCore({ children }: { children: ReactElement }) {
 
         const { audioMed, picture } = data;
 
+        audio.src = "";
+        video.src = "";
+
+        video.load();
+        audio.load();
+
         audio.src = audioMed || "";
         video.src = getVideoSrc(data);
 

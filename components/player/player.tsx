@@ -1,6 +1,6 @@
 import type { Item } from "@/helpers/core";
 import Image from "next/image";
-import { useCallback, useEffect, useRef } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useCurrentVideoIndex } from "../videoList/videoList";
 import {
   getVideoSrc,
@@ -29,6 +29,30 @@ export function Player({ data, index }: IProps) {
 
   const playerRef = useRef<HTMLDivElement>(null);
   const debounceTimeout = useRef<NodeJS.Timeout | null>(null);
+
+  const hiddenVideoRef = useRef<HTMLVideoElement>(null);
+  const hiddenAudioRef = useRef<HTMLAudioElement>(null);
+  const [mount, setMount] = useState(false);
+  useEffect(() => {
+    setMount(true);
+  }, []);
+  useEffect(() => {
+    if (mount) {
+      const v = hiddenVideoRef.current;
+      const a = hiddenAudioRef.current;
+
+      return () => {
+        if (v) {
+          v.src = "";
+          v.load();
+        }
+        if (a) {
+          a.src = "";
+          a.load();
+        }
+      };
+    }
+  }, [mount]);
 
   const isCentered = index === currentVideoIndex;
 
@@ -114,8 +138,8 @@ export function Player({ data, index }: IProps) {
         unoptimized={true}
         priority={true}
       />
-      <video hidden src={getVideoSrc(data)} />
-      <audio hidden src={audioMed || ""} />
+      <video ref={hiddenVideoRef} hidden src={getVideoSrc(data)} />
+      <audio ref={hiddenAudioRef} hidden src={audioMed || ""} />
       <div ref={playerRef} className={styles.player} />
       <PlayerUI count={data?.count} />
     </div>

@@ -97,9 +97,6 @@ export function VideoList({ list, date }: IProps) {
   return (
     <PlayerCore>
       <CurrentVideoIndexContext.Provider value={currentVideoIndex}>
-        <div style={{ position: "fixed", top: "20px", left: "20px" }}>
-          {page} {currentVideoIndex}
-        </div>
         {totalList.map((item, index) => (
           <PlayerContainer
             key={item.permalink}
